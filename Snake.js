@@ -1,8 +1,11 @@
 class Snake {
-    constructor(next, numChildren, distance, headMesh, headMaterial, bodyMesh, bodyMaterial, shader) {
-        this.next = next;
+    constructor(head, numChildren, distance, headMesh, headMaterial, bodyMesh, bodyMaterial, shader) {
+        this.head = head;
         this.distance = distance;
         this.initID = numChildren;
+
+        this.headDir = vec3.create();
+        this.tailDir = vec3.create();
         this.velocity = vec3.create();
 
         if (this.isHead)
@@ -13,24 +16,25 @@ class Snake {
             vec3.normalize(randomOffset, randomOffset);
 
             let newTransform = new Transform()
-                .translate(next.gameObject.transform.localPosition)
+                .translate(head.gameObject.transform.localPosition)
                 .translate(randomOffset);
             this.gameObject = new GameObject(newTransform, bodyMesh, bodyMaterial, shader);
+            this.gameObject.material.diffuse = vec3.copy(vec3.create(), this.gameObject.material.diffuse)
         }
 
 
-        this.prev = undefined;
+        this.tail = undefined;
         if (numChildren > 0)
-            this.prev = new Snake(this, numChildren - 1, distance,
+            this.tail = new Snake(this, numChildren - 1, distance,
                 headMesh, headMaterial, bodyMesh, bodyMaterial, shader);
     }
 
     get isHead() {
-        return this.next === undefined;
+        return this.head === undefined;
     }
 
     get isTail() {
-        return this.prev === undefined;
+        return this.tail === undefined;
     }
 
     update(state, deltaTime, headVelocity=undefined) {
@@ -38,68 +42,76 @@ class Snake {
 
         if (this.isHead) {
             if (currPos[1] > 0.)
-                this.velocity[1] -= 0.004;
+                this.velocity[1] -= 0.001;
             else
-                this.velocity[1] += 0.008;
+                this.velocity[1] += 0.003;
 
-            let prevPos = this.prev.gameObject.transform.globalPosition;
-            let deltaPrev = vec3.sub(vec3.create(), currPos, prevPos);
-            vec3.normalize(deltaPrev, deltaPrev);
-            vec3.scaleAndAdd(this.velocity, this.velocity, deltaPrev, 0.001);
+            vec3.sub(this.tailDir, currPos, this.tail.gameObject.transform.globalPosition);
+            vec3.normalize(this.tailDir, this.tailDir);
+            //vec3.scaleAndAdd(this.velocity, this.velocity, this.tailDir, 0.0005);
 
             let targetPos = vec3.scale(vec3.create(), state.character.transform.globalPosition, 0.5);
             let deltaTarget = vec3.sub(vec3.create(), targetPos, currPos);
             vec3.normalize(deltaTarget, deltaTarget);
-            vec3.scaleAndAdd(this.velocity, this.velocity, deltaTarget, 0.002);
+            vec3.scaleAndAdd(this.velocity, this.velocity, deltaTarget, 0.003);
 
             let sqrMagnitude = vec3.dot(this.velocity, this.velocity);
             let velocityDir = vec3.normalize(vec3.create(), this.velocity);
-            vec3.scaleAndAdd(this.velocity, this.velocity, velocityDir, -sqrMagnitude * 0.001);
+            //vec3.scaleAndAdd(this.velocity, this.velocity, velocityDir, -sqrMagnitude * 0.005);
 
-            let finalVelocity = vec3.scale(vec3.create(), this.velocity, 60.0 * deltaTime);
-
+            let finalVelocity = vec3.scale(vec3.create(), this.velocity, 40.0 * deltaTime);
             this.gameObject.transform.translate(finalVelocity);
+
+            vec3.normalize(this.headDir, this.velocity);
+            vec3.scale(this.headDir, this.headDir, -1.);
             headVelocity = vec3.length(finalVelocity);
         }
         else {
-            let nextPos = this.next.gameObject.transform.globalPosition;
-            let prevPos = undefined;
-            if (this.isTail)
-                prevPos = currPos;
-            else
-                prevPos = this.prev.gameObject.transform.globalPosition;
+            let coneDir = this.head.headDir;
+            let headPos = this.head.gameObject.transform.globalPosition;
 
-            let deltaNext = vec3.sub(vec3.create(), currPos, nextPos);
-            let deltaPrev = vec3.sub(vec3.create(), currPos, prevPos);
-            let tangent = vec3.sub(vec3.create(), nextPos, prevPos);
-            vec3.normalize(deltaNext, deltaNext);
-            vec3.normalize(deltaPrev, deltaPrev);
-            vec3.normalize(tangent, tangent);
-            let normal = vec3.add(vec3.create(), deltaNext, deltaPrev);
-            vec3.normalize(normal, normal);
-            let halfway = vec3.scaleAndAdd(vec3.create(), tangent, normal, 1.);
-            vec3.normalize(halfway, halfway);
-            let pointyness = (vec3.dot(deltaNext, deltaPrev) + 1.) * 0.5;
-            let flatness = 1. - pointyness;
+            vec3.sub(this.headDir, currPos, headPos);
+            vec3.normalize(this.headDir, this.headDir);
 
-            this.gameObject.material.diffuse = vec3.fromValues(pointyness, flatness, 0.);
+            if (currPos[1] > -5) {
+                let minConeAngle = Math.PI * 45 / 180.;
+                let maxConeAngle = Math.PI * 45 / 180.;
+                let proj = Math.clamp(vec3.dot(coneDir, this.headDir), -1. + 1e-5, 1. - 1e-5);
+                let coneAngle = Math.acos(proj);
 
-            let coolVec = vec3.create();
-            vec3.scaleAndAdd(coolVec, coolVec, halfway, -1.25 * pointyness);
-            vec3.scaleAndAdd(coolVec, coolVec, tangent, headVelocity * 2.5 - 0.5);
+                this.gameObject.material.diffuse[2] = 0.;
+                if (coneAngle > maxConeAngle || coneAngle < minConeAngle) {
+                    let rotAngle = 0.;
+                    if (coneAngle > maxConeAngle)
+                        rotAngle = coneAngle - maxConeAngle;
+                    else
+                        rotAngle = minConeAngle - coneAngle;
+                    let rotAxis = vec3.cross(vec3.create(), coneDir, this.headDir);
+                    let rotMatrix = mat4.fromRotation(mat4.create(), -rotAngle * 0.1, rotAxis);
+                    vec3.transformMat4(this.headDir, this.headDir, rotMatrix);
+                    this.gameObject.material.diffuse[2] = 1.;
+                }
+            }
 
-            let newPos = vec3.add(vec3.create(), currPos, coolVec );
-            let newDeltaNext = vec3.sub(vec3.create(), newPos, nextPos);
-            vec3.normalize(newDeltaNext, newDeltaNext);
-
-            vec3.scaleAndAdd(newPos, nextPos, newDeltaNext, this.distance);
-
+            let newPos = vec3.scaleAndAdd(vec3.create(), headPos, this.headDir, this.distance);
             this.gameObject.transform.localPosition = newPos;
-            this.gameObject.transform.localRotation = mat4.targetTo(
-                mat4.create(), [0, 0, 0], tangent, normal);
+
         }
         if (!this.isTail) {
-            this.prev.update(state, deltaTime, headVelocity);
+            this.tail.update(state, deltaTime, headVelocity);
+
+            if (!this.isHead) {
+                let pointyness = (-vec3.dot(this.headDir, this.tail.headDir) + 1.) * 0.5;
+                let flatness = 1 - pointyness;
+                this.gameObject.material.diffuse[0] = pointyness;
+                this.gameObject.material.diffuse[1] = flatness;
+            }
+
+            let tangent = vec3.add(vec3.create(), this.headDir, this.tail.headDir);
+            let normal = vec3.scaleAndAdd(vec3.create(), this.headDir, this.tail.headDir, -1.);
+            vec3.normalize(normal, normal);
+            vec3.normalize(tangent, tangent);
+            this.gameObject.transform.localRotation = mat4.targetTo(mat4.create(), [0, 0, 0], tangent, normal);
         }
     }
 

@@ -157,7 +157,6 @@ class Transform {
     scaleBy(scaleVec) {
         this._hasChanged = true;
         vec3.mul(this._scale, this._scale, scaleVec);
-        console.log(this._scale, scaleVec)
         return this;
     }
 
