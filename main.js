@@ -73,6 +73,11 @@ function drawScene(gl, deltaTime, state) {
         gl.uniform3fv(object.shader.uniformLocations.diffuse, object.material.diffuse);
         gl.uniform3fv(object.shader.uniformLocations.lightPos, state.character.transform.globalPosition);
 
+        gl.uniform3fv(object.shader.uniformLocations.ambient, object.material.ambient);
+        gl.uniform3fv(object.shader.uniformLocations.specular, object.material.specular);
+        gl.uniform3fv(object.shader.uniformLocations.camPos, state.character.transform1.globalPosition);
+        gl.uniform1f(object.shader.uniformLocations.nCoeff, object.material.n);
+
         gl.bindVertexArray(object.mesh.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, object.mesh.numVertices);
     });
@@ -113,11 +118,27 @@ function transformShader(gl) {
     
     uniform vec3 diffuse;
     uniform vec3 lightPos;
-    
+    uniform vec3 ambient;
+    uniform vec3 specular;
+    uniform float nCoeff;
+    uniform vec3 camPos;
+
     void main() {
+
+        //ambient term
+        vec3 aTerm = ambient;
+        //diffuse term
         vec3 L = normalize(lightPos - fragPos.xyz);
         float N_dot_L = abs(dot(N, L));
-        fragColor = vec4(diffuse * N_dot_L, 1.0);
+        vec3 dTerm = diffuse*N_dot_L;
+        //specular term
+        vec3 H = L + normalize(camPos-fragPos.xyz);
+        H = normalize(H);
+        float spec = pow(max(dot(H,N),0.0),nCoeff);
+        vec3 sTerm = spec*specular*30.0;
+        fragColor = vec4((aTerm + dTerm + sTerm), 1.0);
+        
+      //  fragColor = vec4(diffuse * N_dot_L, 1.0);
     }
     `;
 
@@ -136,6 +157,10 @@ function transformShader(gl) {
 
             "diffuse": gl.getUniformLocation(id, "diffuse"),
             "lightPos": gl.getUniformLocation(id, "lightPos"),
+            "ambient": gl.getUniformLocation(id, "ambient"),
+            "specular": gl.getUniformLocation(id, "specular"),
+            "nCoeff": gl.getUniformLocation(id, "nCoeff"),
+            "camPos": gl.getUniformLocation(id, "camPos"),
         },
     };
 
