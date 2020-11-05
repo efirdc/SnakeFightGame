@@ -6,6 +6,8 @@ class Character {
         // transform2 is a child of transform1, and handles up/down look
         this.transform2 = new Transform().translate(position);
         this.transform2.setParent(this.transform1);
+
+        this.velocity = vec3.create();
     }
 
     get transform() {
@@ -17,7 +19,7 @@ class Character {
         let inputHandler = state.inputHandler;
         let moveAxis = vec3.fromValues(
             inputHandler.isKeyHeld("KeyD") - inputHandler.isKeyHeld("KeyA"),
-            inputHandler.isKeyHeld("Space") - inputHandler.isKeyHeld("ShiftLeft"),
+            0.,
             inputHandler.isKeyHeld("KeyS") - inputHandler.isKeyHeld("KeyW"),
         );
         vec3.normalize(moveAxis, moveAxis);
@@ -38,8 +40,17 @@ class Character {
             this.transform2.rotate([1, 0, 0], rotationAmount);
 
         // Translation
+        this.velocity[1] -= 0.025;
+        if (this.transform1.globalPosition[1] < 0.5) {
+            this.velocity[1] = 0.0;
+        }
+
+        if (inputHandler.isKeyPressed("Space")){
+            this.velocity[1] = 0.5;
+        }
+
         let moveVector = this.transform1.transformDirection(moveAxis);
-        moveVector = vec3.scale(vec3.create(), moveVector, 6. * deltaTime);
-        this.transform1.translate(moveVector);
+        vec3.scaleAndAdd(this.velocity, this.velocity, moveVector, 0.2 * deltaTime);
+        this.transform1.translate(this.velocity);
     }
 }
