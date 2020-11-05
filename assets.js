@@ -24,8 +24,8 @@ const assets = {
         }
     },
     materials: {
-        purple: {diffuse: [0.6,0.0,0.6]},
-        red: {diffuse: [0.6,0.0,0.0]},
-        green: {diffuse: [0.0,0.6,0.0]},
+        purple: {ambient: [0.3,0.0,0.3], diffuse: [0.3,0.0,0.3], specular: [0.4, 0.0, 0.4], n: 20000.0},
+        red: {ambient: [0.3, 0.0, 0.0], diffuse: [0.6,0.0,0.0], specular: [0.1, 0.0, 0.0], n:2000.0},
+        green: {ambient: [0.0,0.1,0.0], diffuse: [0.0,0.6,0.0], specular: [0.0,0.2,0.0], n: 20.0},
     }
 };
