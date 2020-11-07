@@ -119,6 +119,7 @@ class Transform {
     get localScale() {
         return vec3.copy(vec3.create(), this._scale);
     }
+
     get globalPosition() {
         return this.transformPoint([0, 0, 0]);
     }

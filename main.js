@@ -30,10 +30,10 @@ function main() {
 
     let headMesh = new Mesh(gl, assets.meshes.cube, mat4.fromScaling(mat4.create(), [4, 4, 4]));
 
-    let bodyMat = mat4.create();
-    mat4.scale(bodyMat, bodyMat, [3., 3., 8]);
-    mat4.rotate(bodyMat, bodyMat, Math.PI / 4., [1, 1, 0.]);
-    let bodyMesh = new Mesh(gl, assets.meshes.cube, bodyMat);
+    let bodyMatrix = mat4.create();
+    mat4.scale(bodyMatrix, bodyMatrix, [3., 3., 8]);
+    mat4.rotate(bodyMatrix, bodyMatrix, Math.PI / 4., [1, 1, 0.]);
+    let bodyMesh = new Mesh(gl, assets.meshes.cube, bodyMatrix);
     state["snake"] = new Snake(undefined, 200, 6.,
         headMesh, assets.materials.red, bodyMesh, assets.materials.purple, shader);
 
