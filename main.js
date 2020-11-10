@@ -23,7 +23,7 @@ function main() {
         lStrength: new Float32Array(14),
     };
     //Setting up the lights, in a beautiful circle
-    var nol=5;//Number Of Lights
+    var nol=2;//Number Of Lights
     for (var i=0;i<=nol;i++){
         state.lights[3*i]=5.0*Math.cos(2*i*Math.PI/nol);//x values
         state.lights[1+3*i]=5.0*Math.sin(2*i*Math.PI/nol);//y values
@@ -31,7 +31,7 @@ function main() {
         state.lColor[3*i]=1.0;//1.0-i/9;//red values
         state.lColor[1+3*i]=1.0;//-i/3;//green values
         state.lColor[2+3*i]=1.0;//i/3;//blue values
-        state.lStrength[i]=0.5;//strength values
+        state.lStrength[i]=0.1;//strength values
     }
 
     let shader = transformShader(gl);
@@ -47,7 +47,7 @@ function main() {
     let bodyMat = mat4.create();
     mat4.scale(bodyMat, bodyMat, [3., 3., 8]);
     mat4.rotate(bodyMat, bodyMat, Math.PI / 4., [1, 1, 0.]);
-    let bodyMesh = new Mesh(gl, assets.meshes.cube, bodyMat);
+    let bodyMesh = new Mesh(gl, assets.meshes.smoothCube, bodyMat);
     state["snake"] = new Snake(undefined, 200, 6.,
         headMesh, assets.materials.red, bodyMesh, assets.materials.purple, shader);
 
