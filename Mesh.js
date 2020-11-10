@@ -2,7 +2,7 @@ class Mesh {
     constructor(gl, meshData, matrix=undefined) {
         let vertices = meshData.vertices.map(v => [...v]);
         let triangles = meshData.triangles;
-
+        let normals = meshData.normals.map(v => [...v]);
 
         // Apply an optional matrix transformation to the vertices.
         // This transformation is baked into the mesh vertices and only applied once right here
@@ -12,8 +12,9 @@ class Mesh {
         }
 
         // Switch from index triangle representation to separate triangle representation
-        let allVertices = triangles.map(triangleIDs => triangleIDs.map(i => vertices[i]));
+  //      let allVertices = triangles.map(triangleIDs => triangleIDs.map(i => vertices[i]));
         // Compute vertex normals
+        /*
         let allNormals = allVertices.map(triangle => {
             let A = vec3.fromValues(...triangle[0]);
             let B = vec3.fromValues(...triangle[1]);
@@ -24,9 +25,9 @@ class Mesh {
             vec3.normalize(N, N);
             return [N[0], N[1], N[2]];
         }).map(N => [N, N, N]);
-
-        this.vertexArray = new Float32Array(allVertices.flat().flat());
-        this.normalArray = new Float32Array(allNormals.flat().flat());
+*/
+        this.vertexArray = new Float32Array(vertices.flat().flat());
+        this.normalArray = new Float32Array(normals.flat().flat());
         this.numVertices = this.vertexArray.length;
 
         this.VAO = gl.createVertexArray();
