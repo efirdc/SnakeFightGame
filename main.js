@@ -15,7 +15,7 @@ function main() {
     }
 
     let state = {
-        character: new Character(vec3.fromValues(0.25, 0.3, 2.5)),
+        character: new Character(vec3.fromValues(0.0, 50.3, 0.5)),
         inputHandler: new InputHandler(),
         canvas: canvas,
         lights: new Float32Array(42),
@@ -37,10 +37,12 @@ function main() {
     let shader = transformShader(gl);
 
     let cubeMesh = new Mesh(gl, assets.meshes.cube);
-    let planeMesh = new Mesh(gl, assets.meshes.quad, mat4.fromScaling(mat4.create(), [10000, 1, 10000]));
+//    let planeMesh = new Mesh(gl, assets.meshes.quad, mat4.fromScaling(mat4.create(), [10000, 1, 10000]));
+
+    let sphereMesh=new Mesh(gl,assets.meshes.sphere,mat4.fromScaling(mat4.create(),[50.0,50.0,50.0]));
 
     let coolCube = new GameObject(new Transform().translate([0, 0.5, 0]), cubeMesh, assets.materials.red, shader);
-    let ground = new GameObject(new Transform(), planeMesh, assets.materials.green, shader);
+    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.green, shader);
 
     let headMesh = new Mesh(gl, assets.meshes.cube, mat4.fromScaling(mat4.create(), [4, 4, 4]));
 
