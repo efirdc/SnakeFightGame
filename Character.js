@@ -41,16 +41,49 @@ class Character {
 
         // Translation
         this.velocity[1] -= 0.025;
-        if (this.transform1.globalPosition[1] < 0.5) {
+//      if (this.transform1.globalPosition[1] < 0.5) {
+        if (vec3.length(this.transform1.globalPosition)<52.0){
             this.velocity[1] = 0.0;
         }
-
         if (inputHandler.isKeyPressed("Space")){
             this.velocity[1] = 0.5;
         }
+        
+        if (this.velocity[0]!=0.0 || this.velocity[2]!=0.0){
+            let friction=vec3.fromValues(-0.02*this.velocity[0],0.0,-0.02*this.velocity[2]);
+            vec3.add(this.velocity, this.velocity,friction);
+        }
+
 
         let moveVector = this.transform1.transformDirection(moveAxis);
         vec3.scaleAndAdd(this.velocity, this.velocity, moveVector, 0.2 * deltaTime);
-        this.transform1.translate(this.velocity);
+        
+        
+        let right=vec3.create();
+        let forward=vec3.create();
+        let at = vec3.fromValues(this.transform1.forward[0],this.transform1.forward[1],this.transform1.forward[2]);
+        let up=vec3.fromValues(this.transform1.globalPosition[0], this.transform1.globalPosition[1], this.transform1.globalPosition[2]);
+        vec3.normalize(up,up);
+        let curve=vec3.fromValues(0.0,0.0,0.0);
+        vec3.negate(curve,up);
+        vec3.scale(curve,curve,0.03);
+
+        vec3.cross(right, at, up);
+        vec3.cross(forward, up, right);
+        vec3.normalize(forward, forward);
+        vec3.add(forward,forward,curve);
+        vec3.normalize(forward,forward);
+        vec3.normalize(right,right);
+        let sphereVel=vec3.fromValues(0.0,0.0,0.0);
+        let tmp1=vec3.fromValues(0.0,0.0,0.0);
+        let tmp2=vec3.fromValues(0.0,0.0,0.0);
+        vec3.scale(tmp1, up, this.velocity[1]);
+        vec3.scale(tmp2, right, this.velocity[0]);
+        vec3.scale(sphereVel, forward, this.velocity[2]);
+        vec3.add(sphereVel, sphereVel, tmp1);
+        vec3.add(sphereVel, sphereVel, tmp2);
+
+
+        this.transform1.translate(sphereVel);
     }
 }
