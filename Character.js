@@ -41,16 +41,39 @@ class Character {
 
         // Translation
         this.velocity[1] -= 0.025;
-        if (this.transform1.globalPosition[1] < 0.5) {
+//      if (this.transform1.globalPosition[1] < 0.5) {
+        if (vec3.length(this.transform1.globalPosition)<50.0){
             this.velocity[1] = 0.0;
         }
-
         if (inputHandler.isKeyPressed("Space")){
             this.velocity[1] = 0.5;
         }
+        
+        if (this.velocity[0]!=0.0 || this.velocity[2]!=0.0){
+            let friction=vec3.fromValues(-0.02*this.velocity[0],0.0,-0.02*this.velocity[2]);
+            vec3.add(this.velocity, this.velocity,friction);
+        }
+
 
         let moveVector = this.transform1.transformDirection(moveAxis);
         vec3.scaleAndAdd(this.velocity, this.velocity, moveVector, 0.2 * deltaTime);
-        this.transform1.translate(this.velocity);
+ 
+        let curve = vec3.create();
+        let forward = vec3.create();
+        vec3.negate(curve, this.transform1.up);
+        vec3.scale(curve,curve,1/vec3.length(this.transform1.globalPosition));
+        vec3.add(forward,this.transform1.forward, curve);
+
+        let sphereVel=vec3.fromValues(0.0,0.0,0.0);
+        let tmp1=vec3.fromValues(0.0,0.0,0.0);
+        let tmp2=vec3.fromValues(0.0,0.0,0.0);
+        vec3.scale(tmp1, this.transform1.up, this.velocity[1]);
+        vec3.scale(tmp2, this.transform1.right, this.velocity[0]);
+        vec3.scale(sphereVel, forward, this.velocity[2]);
+        vec3.add(sphereVel, sphereVel, tmp1);
+        vec3.add(sphereVel, sphereVel, tmp2);
+
+
+        this.transform1.translate(sphereVel);
     }
 }
