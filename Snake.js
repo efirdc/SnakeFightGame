@@ -41,10 +41,11 @@ class Snake {
         let currPos = this.gameObject.transform.globalPosition;
 
         if (this.isHead) {
-            if (currPos[1] > 0.)
-                this.velocity[1] -= 0.001;
+            let upDirection = vec3.normalize(vec3.create(), this.gameObject.transform.globalPosition);
+            if (vec3.length(this.gameObject.transform.globalPosition) > 200.)
+                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, -0.001);
             else
-                this.velocity[1] += 0.003;
+                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, 0.003);
 
             vec3.sub(this.tailDir, currPos, this.tail.gameObject.transform.globalPosition);
             vec3.normalize(this.tailDir, this.tailDir);
@@ -73,7 +74,7 @@ class Snake {
             vec3.sub(this.headDir, currPos, headPos);
             vec3.normalize(this.headDir, this.headDir);
 
-            if (currPos[1] > -5) {
+            if (vec3.length(this.gameObject.transform.globalPosition) > 195.) {
                 let minConeAngle = Math.PI * 45 / 180.;
                 let maxConeAngle = Math.PI * 45 / 180.;
                 let proj = Math.clamp(vec3.dot(coneDir, this.headDir), -1. + 1e-5, 1. - 1e-5);

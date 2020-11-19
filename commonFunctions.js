@@ -84,3 +84,28 @@ function loadShader(gl, type, source) {
 
     return shader;
 }
+
+
+function loadTextFileAjaxSync(filePath, mimeType)
+{
+    let xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", filePath,false);
+    if (mimeType != null) {
+        if (xmlhttp.overrideMimeType) {
+            xmlhttp.overrideMimeType(mimeType);
+        }
+    }
+    xmlhttp.send();
+    if (xmlhttp.status === 200 && xmlhttp.readyState === 4 )
+        return xmlhttp.responseText;
+    else
+        return null;
+}
+
+function loadJSON(filePath) {
+    return JSON.parse(loadTextFileAjaxSync(filePath, "application/json"));
+}
+
+function parseOBJFileToJSON(objFileURL) {
+    return OBJLoader.prototype.parse(loadTextFileAjaxSync(objFileURL, "text/plain"));
+}

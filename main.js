@@ -14,32 +14,37 @@ function main() {
         return;
     }
 
+    console.log(parseOBJFileToJSON("models/bunny.obj"));
+
     let state = {
-        character: new Character(vec3.fromValues(0.0, 50.3, 0.5)),
+        character: new Character(vec3.fromValues(0.0, 200.5, 0.5)),
         inputHandler: new InputHandler(),
         canvas: canvas,
-        lights: new Float32Array(42),
-        lColor: new Float32Array(42),
-        lStrength: new Float32Array(14),
+        lights: new Float32Array(42 * 3),
+        lColor: new Float32Array(42 * 3),
+        lStrength: new Float32Array(42),
     };
-    //Setting up the lights, in a beautiful circle
-    var nol=2;//Number Of Lights
+
+    // Setting up the lights, in a beautiful circle
+    var nol = 2; // Number Of Lights
     for (var i=0;i<=nol;i++){
-        state.lights[3*i]=5.0*Math.cos(2*i*Math.PI/nol);//x values
-        state.lights[1+3*i]=5.0*Math.sin(2*i*Math.PI/nol);//y values
-        state.lights[2+3*i]=10.0;//z values
+        state.lights[3*i] = 15.0*Math.cos(2*i*Math.PI/nol);//x values
+        state.lights[1+3*i] = 210.;
+        state.lights[2+3*i] = 15.0*Math.sin(2*i*Math.PI/nol);//y values10.0;//z values
+
         state.lColor[3*i]=1.0;//1.0-i/9;//red values
         state.lColor[1+3*i]=1.0;//-i/3;//green values
         state.lColor[2+3*i]=1.0;//i/3;//blue values
-        state.lStrength[i]=0.1;//strength values
+
+        state.lStrength[i]=1.0;//strength values
     }
 
     let shader = transformShader(gl);
 
     let cubeMesh = new Mesh(gl, assets.meshes.cube);
-//    let planeMesh = new Mesh(gl, assets.meshes.quad, mat4.fromScaling(mat4.create(), [10000, 1, 10000]));
+    // let planeMesh = new Mesh(gl, assets.meshes.quad, mat4.fromScaling(mat4.create(), [10000, 1, 10000]));
 
-    let sphereMesh=new Mesh(gl,assets.meshes.sphere,mat4.fromScaling(mat4.create(),[50.0,50.0,50.0]));
+    let sphereMesh = new Mesh(gl,"models/testSphere.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
 
     let coolCube = new GameObject(new Transform().translate([0, 0.5, 0]), cubeMesh, assets.materials.red, shader);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.green, shader);
@@ -125,7 +130,6 @@ function transformShader(gl) {
         N = mat3(uNormalMatrix) * aNormal;
         fragPos = uModelMatrix * vec4(aPosition, 1.0);
         gl_Position =  uProjectionMatrix * uViewMatrix * fragPos;
-        
     }
     `;
 
@@ -149,23 +153,25 @@ function transformShader(gl) {
     uniform float[42] lStrength;
 
     void main() {
-        vec3 aTerm=vec3(0.0,0.0,0.0);
-        vec3 dTerm=vec3(0.0,0.0,0.0);
-        vec3 sTerm=vec3(0.0,0.0,0.0);
-        for (int i=0;i<nLights;i++){
+        vec3 outColor = vec3(0);
+        for (int i=0;i<nLights;i++) {
             //ambient term
-            aTerm = aTerm + (ambient*lColor[i]*lStrength[i]);
+            vec3 aTerm = ambient*lColor[i]*lStrength[i];
+            
             //diffuse term
             vec3 L = normalize(lightPos[i] - fragPos.xyz);
-            float N_dot_L = abs(dot(N, L));
-            dTerm = dTerm + (diffuse*N_dot_L*lColor[i]);
+            float N_dot_L = max(dot(N, L), 0.0);
+            vec3 dTerm = diffuse * N_dot_L * lColor[i];
+            
             //specular term
             vec3 H = L + normalize(camPos-fragPos.xyz);
             H = normalize(H);
             float spec = pow(max(dot(H,N),0.0),nCoeff);
-            sTerm = sTerm + spec*specular*lColor[i];
+            vec3 sTerm = spec*specular*lColor[i];
+            
+            outColor += aTerm + sTerm + dTerm;
         }
-        fragColor = vec4((aTerm + dTerm + sTerm), 1.0);
+        fragColor = vec4(outColor, 1.0);
     }
     `;
 
