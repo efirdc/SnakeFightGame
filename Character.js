@@ -82,7 +82,7 @@ class Character {
         //vec3.add(sphereVel, sphereVel, tmp1);
         //vec3.add(sphereVel, sphereVel, tmp2);
 
-        console.log(this.transform.globalPosition);
+        //console.log(this.transform.globalPosition);
         this.transform1.translate(this.velocity);
     }
 }
