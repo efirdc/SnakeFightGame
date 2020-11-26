@@ -18,6 +18,7 @@ class Character {
         let timeScale = Math.min(deltaTime, 1 / 20) * 60;
         const acceleration = 0.1;
         const frictionCoeff = -0.5;
+        const gravity = -0.01;
 
         // Handle inputs
         let inputHandler = state.inputHandler;
@@ -30,7 +31,7 @@ class Character {
         let deltaMouse = inputHandler.deltaMouse;
 
         let upDirection = vec3.normalize(vec3.create(), this.transform1.globalPosition);
-        vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, -0.005);
+        vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, gravity * timeScale);
 
         let rotAxis = vec3.cross(vec3.create(), upDirection, this.transform1.up);
         let angleDifference = Math.acos(Math.clamp(vec3.dot(upDirection, this.transform1.up), -1., 1.));

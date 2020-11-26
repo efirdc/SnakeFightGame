@@ -1,5 +1,10 @@
 setup();
 
+Math.clamp = function (x, minValue, maxValue) {
+    return Math.min(Math.max(x, minValue), maxValue);
+};
+
+
 function setup() {
     let navTag = document.createElement('nav');
     navTag.classList = "navbar navbar-expand-lg navbar-dark bg-dark";
@@ -108,4 +113,34 @@ function loadJSON(filePath) {
 
 function parseOBJFileToJSON(objFileURL) {
     return OBJLoader.prototype.parse(loadTextFileAjaxSync(objFileURL, "text/plain"));
+}
+
+var spareRandom = null;
+
+function normalRandom()
+{
+    var val, u, v, s, mul;
+
+    if(spareRandom !== null)
+    {
+        val = spareRandom;
+        spareRandom = null;
+    }
+    else
+    {
+        do
+        {
+            u = Math.random()*2-1;
+            v = Math.random()*2-1;
+
+            s = u*u+v*v;
+        } while(s === 0 || s >= 1);
+
+        mul = Math.sqrt(-2 * Math.log(s) / s);
+
+        val = u * mul;
+        spareRandom = v * mul;
+    }
+
+    return val;
 }
