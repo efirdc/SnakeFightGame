@@ -15,6 +15,10 @@ class Character {
     }
 
     update(state, deltaTime) {
+        let timeScale = Math.min(deltaTime, 1 / 20) * 60;
+        const acceleration = 0.1;
+        const frictionCoeff = -0.5;
+
         // Handle inputs
         let inputHandler = state.inputHandler;
         let moveAxis = vec3.fromValues(
@@ -61,28 +65,13 @@ class Character {
         let tangentVelocity = vec3.fromValues(localVelocity[0], 0., localVelocity[2]);
         let squareVelocity = vec3.dot(tangentVelocity, tangentVelocity);
         let tangentVelocityNormalized = vec3.normalize(tangentVelocity, tangentVelocity);
-        let frictionVector = vec3.scale(vec3.create(), tangentVelocityNormalized, squareVelocity * -2);
+        let frictionVector = vec3.scale(vec3.create(), tangentVelocityNormalized, squareVelocity * frictionCoeff * timeScale);
         vec3.add(localVelocity, localVelocity, frictionVector);
 
-        /*
-        if (this.velocity[0]!=0.0 || this.velocity[2]!=0.0){
-            let friction=vec3.fromValues(-0.02*this.velocity[0],0.0,-0.02*this.velocity[2]);
-            vec3.add(this.velocity, this.velocity,friction);
-        }*/
-
-        vec3.scaleAndAdd(localVelocity, localVelocity, moveAxis, 4 * deltaTime);
+        vec3.scaleAndAdd(localVelocity, localVelocity, moveAxis, acceleration * timeScale);
         this.velocity = this.transform1.transformVector(localVelocity);
 
-        //let sphereVel=vec3.fromValues(0.0,0.0,0.0);
-        //let tmp1=vec3.fromValues(0.0,0.0,0.0);
-        //let tmp2=vec3.fromValues(0.0,0.0,0.0);
-        //vec3.scale(tmp1, this.transform1.up, this.velocity[1]);
-        //vec3.scale(tmp2, this.transform1.right, this.velocity[0]);
-        //vec3.scale(sphereVel, forward, this.velocity[2]);
-        //vec3.add(sphereVel, sphereVel, tmp1);
-        //vec3.add(sphereVel, sphereVel, tmp2);
-
-        console.log(this.transform.globalPosition);
-        this.transform1.translate(this.velocity);
+        let scaledVelocity = vec3.scale(vec3.create(), this.velocity, timeScale);
+        this.transform1.translate(scaledVelocity);
     }
 }
