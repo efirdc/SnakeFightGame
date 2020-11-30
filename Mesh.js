@@ -52,10 +52,21 @@ class Mesh {
         for (let i = 0; i<this.normalArray.length;i++){
             this.normalArray[i] = -this.normalArray[i];
         }
+        for (let i=0;i<this.vertexArray.length/3;i++){
+            let tmp = this.vertexArray[3*i];
+            this.vertexArray[3*i]=this.vertexArray[3*i+1];
+            this.vertexArray[3*i+1]=tmp;
+        }
         const normalBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.normalArray, gl.STATIC_DRAW);
         gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(1); 
+        gl.enableVertexAttribArray(1);
+
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, this.vertexArray, gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(0);
     }
 }
