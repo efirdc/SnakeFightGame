@@ -14,7 +14,7 @@ function main() {
         return;
     }
 
-    console.log(parseOBJFileToJSON("models/bunny.obj"));
+//    console.log(parseOBJFileToJSON("models/bunny.obj"));
 
     let state = {
         character: new Character(vec3.fromValues(0.0, 200.5, 0.5)),
@@ -41,7 +41,7 @@ function main() {
 
     let shader = transformShader(gl);
 
-    let cubeMesh = new Mesh(gl, assets.meshes.cube);
+    let cubeMesh = new Mesh(gl, "models/cube.obj");
     // let planeMesh = new Mesh(gl, assets.meshes.quad, mat4.fromScaling(mat4.create(), [10000, 1, 10000]));
 
     let sphereMesh = new Mesh(gl,"models/testSphere.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
@@ -49,12 +49,12 @@ function main() {
     let coolCube = new GameObject(new Transform().translate([0, 0.5, 0]), cubeMesh, assets.materials.red, shader);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.green, shader);
 
-    let headMesh = new Mesh(gl, assets.meshes.cube, mat4.fromScaling(mat4.create(), [4, 4, 4]));
+    let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
 
     let bodyMat = mat4.create();
     mat4.scale(bodyMat, bodyMat, [3., 3., 8]);
     mat4.rotate(bodyMat, bodyMat, Math.PI / 4., [1, 1, 0.]);
-    let bodyMesh = new Mesh(gl, assets.meshes.smoothCube, bodyMat);
+    let bodyMesh = new Mesh(gl, "models/smoothCube.obj", bodyMat);
     state["snake"] = new Snake(undefined, 200, 6.,
         headMesh, assets.materials.red, bodyMesh, assets.materials.purple, shader);
 
@@ -92,7 +92,6 @@ function drawScene(gl, deltaTime, state) {
         gl.uniformMatrix4fv(object.shader.uniformLocations.uNormalMatrix, false, object.transform.normalMatrix);
 
         gl.uniform3fv(object.shader.uniformLocations.diffuse, object.material.diffuse);
-       // gl.uniform3fv(object.shader.uniformLocations.lightPos, state.character.transform.globalPosition);
 
         gl.uniform3fv(object.shader.uniformLocations.ambient, object.material.ambient);
         gl.uniform3fv(object.shader.uniformLocations.specular, object.material.specular);
@@ -142,7 +141,6 @@ function transformShader(gl) {
     in vec4 fragPos;
     
     uniform vec3 diffuse;
-   // uniform vec3 lightPos;
     uniform vec3 ambient;
     uniform vec3 specular;
     uniform float nCoeff;
