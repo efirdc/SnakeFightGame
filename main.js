@@ -23,18 +23,19 @@ function main() {
         lights: new Float32Array(42 * 3),
         lColor: new Float32Array(42 * 3),
         lStrength: new Float32Array(42),
+        nol: 0,
     };
 
     // Setting up the lights, in a beautiful circle
-    var nol = 2; // Number Of Lights
-    for (var i=0;i<=nol;i++){
-        state.lights[3*i] = 15.0*Math.cos(2*i*Math.PI/nol);//x values
+    state.nol = 3; // Number Of Lights
+    for (var i=0;i<state.nol;i++){
+        state.lights[3*i] = 200.0*Math.cos(2*i*Math.PI/state.nol);//x values
         state.lights[1+3*i] = 210.;
-        state.lights[2+3*i] = 15.0*Math.sin(2*i*Math.PI/nol);//y values10.0;//z values
+        state.lights[2+3*i] = 200.0*Math.sin(2*i*Math.PI/state.nol);
 
-        state.lColor[3*i]=1.0;//1.0-i/9;//red values
-        state.lColor[1+3*i]=1.0;//-i/3;//green values
-        state.lColor[2+3*i]=1.0;//i/3;//blue values
+        state.lColor[3*i]=1.0-i/3;//red values
+        state.lColor[1+3*i]=0.0;//-i/3;//green values
+        state.lColor[2+3*i]=i/3;//blue values
 
         state.lStrength[i]=1.0;//strength values
     }
@@ -42,12 +43,13 @@ function main() {
     let shader = transformShader(gl);
 
     let cubeMesh = new Mesh(gl, "models/cube.obj");
-    // let planeMesh = new Mesh(gl, assets.meshes.quad, mat4.fromScaling(mat4.create(), [10000, 1, 10000]));
 
-    let sphereMesh = new Mesh(gl,"models/testSphere.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
+    let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
 
-    let coolCube = new GameObject(new Transform().translate([0, 0.5, 0]), cubeMesh, assets.materials.red, shader);
-    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.green, shader);
+   // let outerSphere = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[800.0,800.0,800.0]));
+   // let coolCube = new GameObject(new Transform().translate([0, 200, 0]), cubeMesh, assets.materials.red, shader);
+    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
+   // let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.purple, shader);
 
     let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
 
@@ -78,6 +80,14 @@ function drawScene(gl, deltaTime, state) {
 
     state.character.update(state, deltaTime);
     state.snake.update(state, deltaTime);
+    //update last light as current character position
+    state.lights[3*state.nol] = state.character.transform1.globalPosition[0];
+    state.lights[1+3*state.nol] = state.character.transform1.globalPosition[1];
+    state.lights[2+3*state.nol] = state.character.transform1.globalPosition[2];
+    state.lColor[3*state.nol]=0.0;
+    state.lColor[1+3*state.nol]=1.0;
+    state.lColor[2+3*state.nol]=0.0;
+    state.lStrength[state.nol]=0.5;
 
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
@@ -101,7 +111,7 @@ function drawScene(gl, deltaTime, state) {
         gl.uniform3fv(object.shader.uniformLocations.lightPos, state.lights);
         gl.uniform3fv(object.shader.uniformLocations.lColor, state.lColor);
         gl.uniform1fv(object.shader.uniformLocations.lStrength, state.lStrength);
-        gl.uniform1i(object.shader.uniformLocations.nLights, state.lights.length);
+        gl.uniform1i(object.shader.uniformLocations.nLights, state.nol+1);//+1 for the character light
 
         gl.bindVertexArray(object.mesh.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, object.mesh.numVertices);
@@ -150,7 +160,7 @@ function transformShader(gl) {
     uniform vec3[42] lColor;
     uniform float[42] lStrength;
 
-    void main() {
+    vec3 combineLights(){
         vec3 outColor = vec3(0);
         for (int i=0;i<nLights;i++) {
             //ambient term
@@ -169,7 +179,11 @@ function transformShader(gl) {
             
             outColor += aTerm + sTerm + dTerm;
         }
-        fragColor = vec4(outColor, 1.0);
+        return outColor;
+    }
+
+    void main() {
+       fragColor = vec4(combineLights(),1.0);
     }
     `;
 

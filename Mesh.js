@@ -5,12 +5,12 @@ class Mesh {
         let normals = [];
         if (typeof meshData === 'string') {
             meshData = parseOBJFileToJSON(meshData);
-            console.log(meshData);
+//            console.log(meshData);
             for (let i = 0; i < Math.floor(meshData.vertices.length / 3); i++) {
                 vertices.push([meshData.vertices[3*i], meshData.vertices[3*i + 1], meshData.vertices[3*i + 2]]);
                 normals.push([meshData.normals[3*i], meshData.normals[3*i + 1], meshData.normals[3*i + 2]]);
             }
-            console.log(vertices);
+           // console.log("normals:"+normals);
 
         } else {
             vertices = meshData.vertices.map(v => [...v]);
@@ -25,6 +25,7 @@ class Mesh {
             let normalMatrix = mat4.invert(mat4.create(), matrix);
             mat4.transpose(normalMatrix, normalMatrix);
             normals.forEach(normal => vec3.transformMat4(normal, normal, normalMatrix));
+            normals.forEach(normal => vec3.normalize(normal, normal));
             normals = normals.map(v => [v[0], v[1], v[2]]);
         }
 
