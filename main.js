@@ -29,9 +29,9 @@ function main() {
     // Setting up the lights, in a beautiful circle
     state.nol = 3; // Number Of Lights
     for (var i=0;i<state.nol;i++){
-        state.lights[3*i] = 200.0*Math.cos(2*i*Math.PI/state.nol);//x values
-        state.lights[1+3*i] = 210.;
-        state.lights[2+3*i] = 200.0*Math.sin(2*i*Math.PI/state.nol);
+        state.lights[3*i] = 500.0*Math.cos(2*i*Math.PI/state.nol);//x values
+        state.lights[1+3*i] = 510.;
+        state.lights[2+3*i] = 500.0*Math.sin(2*i*Math.PI/state.nol);
 
         state.lColor[3*i]=1.0-i/3;//red values
         state.lColor[1+3*i]=0.0;//-i/3;//green values
@@ -46,10 +46,11 @@ function main() {
 
     let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
 
-   // let outerSphere = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[800.0,800.0,800.0]));
+    let outerSphere = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[800.0,800.0,800.0]));
+    outerSphere.invertNormals(gl);
    // let coolCube = new GameObject(new Transform().translate([0, 200, 0]), cubeMesh, assets.materials.red, shader);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
-   // let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.purple, shader);
+    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
 
     let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
 

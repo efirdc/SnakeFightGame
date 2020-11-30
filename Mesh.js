@@ -48,4 +48,14 @@ class Mesh {
         gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(1);
     }
+    invertNormals(gl){
+        for (let i = 0; i<this.normalArray.length;i++){
+            this.normalArray[i] = -this.normalArray[i];
+        }
+        const normalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, this.normalArray, gl.STATIC_DRAW);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(1); 
+    }
 }
