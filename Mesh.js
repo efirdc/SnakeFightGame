@@ -49,13 +49,17 @@ class Mesh {
         gl.enableVertexAttribArray(1);
     }
     invertNormals(gl){
-        for (let i = 0; i<this.normalArray.length;i++){
+       /* for (let i = 0; i<this.normalArray.length;i++){
             this.normalArray[i] = -this.normalArray[i];
-        }
+        }*/
         for (let i=0;i<this.vertexArray.length/3;i++){
-            let tmp = this.vertexArray[3*i];
+            let tmp1 = this.vertexArray[3*i];
+            let tmp2 = this.normalArray[3*i];
+            this.normalArray[3*i+2]=-this.normalArray[3*i+2];
             this.vertexArray[3*i]=this.vertexArray[3*i+1];
-            this.vertexArray[3*i+1]=tmp;
+            this.normalArray[3*i]=-this.normalArray[3*i+1];
+            this.vertexArray[3*i+1]=tmp1;
+            this.normalArray[3*i+1]=-tmp2;
         }
         const normalBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
