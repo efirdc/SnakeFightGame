@@ -1,8 +1,5 @@
 main();
 
-Math.clamp = function (x, minValue, maxValue) {
-    return Math.min(Math.max(x, minValue), maxValue);
-};
 
 function main() {
     const canvas = document.querySelector("#mainCanvas");
@@ -46,11 +43,23 @@ function main() {
 
     let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
 
+
+    for (i = 0; i < 150; i++) {
+        let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
+        vec3.normalize(dir, dir);
+        let pos = vec3.scale(vec3.create(), dir, 200);
+        let cube = new GameObject(new Transform(), cubeMesh, assets.materials.red, shader);
+        cube.transform.localPosition = pos;
+        cube.transform.scaleBy([15, 15, 15]);
+        cube.transform.rotateTowards([0, 1, 0], dir);
+    }
+
+    let coolCube = new GameObject(new Transform().translate([0, 0.5, 0]), cubeMesh, assets.materials.red, shader);
     let outerSphere = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[800.0,800.0,800.0]));
     outerSphere.invertNormals(gl);
-   // let coolCube = new GameObject(new Transform().translate([0, 200, 0]), cubeMesh, assets.materials.red, shader);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
     let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
+
 
     let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
 
@@ -100,10 +109,13 @@ function drawScene(gl, deltaTime, state) {
     GameObject.All.forEach(object => {
         gl.useProgram(object.shader.id);
 
+        let m1 = state.character.transform.worldToLocalMatrix;
+        let m2 = object.transform.localToWorldMatrix;
+        let m3 = object.transform.normalMatrix
         gl.uniformMatrix4fv(object.shader.uniformLocations.uProjectionMatrix, false, projectionMatrix);
-        gl.uniformMatrix4fv(object.shader.uniformLocations.uViewMatrix, false, state.character.transform.worldToLocalMatrix);
-        gl.uniformMatrix4fv(object.shader.uniformLocations.uModelMatrix, false, object.transform.localToWorldMatrix);
-        gl.uniformMatrix4fv(object.shader.uniformLocations.uNormalMatrix, false, object.transform.normalMatrix);
+        gl.uniformMatrix4fv(object.shader.uniformLocations.uViewMatrix, false, m1);
+        gl.uniformMatrix4fv(object.shader.uniformLocations.uModelMatrix, false, m2);
+        gl.uniformMatrix4fv(object.shader.uniformLocations.uNormalMatrix, false, m3);
 
         gl.uniform3fv(object.shader.uniformLocations.diffuse, object.material.diffuse);
 

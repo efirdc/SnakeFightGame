@@ -155,6 +155,18 @@ class Transform {
         mat4.rotate(this._rotation, this._rotation, rad, axis);
         return this;
     }
+
+    rotateTowards(fromAxis, toAxis, percent=1., space=Space.LOCAL) {
+        this._hasChanged = true;
+        if (space === Space.WORLD) {
+            fromAxis = this.inverseTransformDirection(fromAxis);
+            toAxis = this.inverseTransformDirection(toAxis);
+        }
+        let cosineAngle = Math.clamp(vec3.dot(toAxis, fromAxis), -1., 1.);
+        let angleDifference = Math.acos(cosineAngle);
+        let rotAxis = vec3.cross(vec3.create(), toAxis, fromAxis);
+        this.rotate(rotAxis, -angleDifference * percent, space);
+    }
     scaleBy(scaleVec) {
         this._hasChanged = true;
         vec3.mul(this._scale, this._scale, scaleVec);
