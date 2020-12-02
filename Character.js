@@ -90,15 +90,18 @@ class Character {
         for (let i=0; i<state.columns.length; i++){
             let height=vec3.length(this.transform1.globalPosition);
             let dColumn=vec3.fromValues(state.columns[3*i],state.columns[3*i+1],state.columns[3*i+2]);//get the direction of the column
-           // console.log(state.columns);
-            vec3.scale(dColumn,dColumn,height);//get the closest centre point
-            vec3.negate(dColumn,dColumn);//the vector between centre and where we are
+            let center = vec3.scale(vec3.create(),dColumn,height);
+           // vec3.scale(dColumn,dColumn,height);//get the closest centre point
+           // vec3.negate(dColumn,dColumn);//the vector between centre and where we are
+            vec3.negate(dColumn,center);
             vec3.add(dColumn,dColumn,this.transform1.globalPosition);
             if (vec3.length(dColumn)<10){
-                console.log("BOOP");
+               // console.log("BOOP"); //indicates it works
                 let newPosition = vec3.normalize(vec3.create(),this.transform1.globalPosition);
+                
+                vec3.normalize(dColumn,dColumn);
                 vec3.scale(dColumn, dColumn, 10);
-                vec3.add(newPosition, dColumn, newPosition);
+                vec3.add(center, dColumn, center);
                 this.transform1.localPosition = newPosition;
             }
         }

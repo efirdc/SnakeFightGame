@@ -42,7 +42,7 @@ function main() {
         let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
         vec3.normalize(dir, dir);
         state.columns[3*i]=dir[0];state.columns[3*i+1]=dir[1];state.columns[3*i+2]=dir[2];
-        let pos = vec3.scale(vec3.create(), dir, 200);
+        let pos = vec3.scale(vec3.create(), dir, 600);
         let t1 = new Transform();
         t1.localPosition = pos;
         t1.rotateTowards([0, 1, 0], dir);
