@@ -1,6 +1,5 @@
 main();
 
-
 function main() {
     const canvas = document.querySelector("#mainCanvas");
 
@@ -11,8 +10,6 @@ function main() {
         return;
     }
 
-//    console.log(parseOBJFileToJSON("models/bunny.obj"));
-
     let state = {
         character: new Character(vec3.fromValues(0.0, 200.5, 0.5)),
         inputHandler: new InputHandler(),
@@ -21,37 +18,35 @@ function main() {
         lColor: new Float32Array(42 * 3),
         lStrength: new Float32Array(42),
         nol: 0,
+        columns: new Float32Array(30),
     };
 
     // Setting up the lights, in a beautiful circle
-    state.nol = 3; // Number Of Lights
+    state.nol = 1; // Number Of Lights
     for (var i=0;i<state.nol;i++){
         state.lights[3*i] = 500.0*Math.cos(2*i*Math.PI/state.nol);//x values
         state.lights[1+3*i] = 510.;
         state.lights[2+3*i] = 500.0*Math.sin(2*i*Math.PI/state.nol);
-
-        state.lColor[3*i]=1.0-i/3;//red values
+        state.lColor[3*i]=0//1.0-i/3;//red values
         state.lColor[1+3*i]=0.0;//-i/3;//green values
-        state.lColor[2+3*i]=i/3;//blue values
-
+        state.lColor[2+3*i]=1.0//i/3;//blue values
         state.lStrength[i]=1.0;//strength values
     }
 
     let shader = transformShader(gl);
-
     let cubeMesh = new Mesh(gl, "models/cube.obj");
-
     let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
+    let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
 
-
-    for (i = 0; i < 150; i++) {
+    for (i = 0; i < 1; i++) {
         let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
         vec3.normalize(dir, dir);
+        state.columns[3*i]=dir[0];state.columns[3*i+1]=dir[1];state.columns[3*i+2]=dir[2];
         let pos = vec3.scale(vec3.create(), dir, 200);
-        let cube = new GameObject(new Transform(), cubeMesh, assets.materials.red, shader);
-        cube.transform.localPosition = pos;
-        cube.transform.scaleBy([15, 15, 15]);
-        cube.transform.rotateTowards([0, 1, 0], dir);
+        let t1 = new Transform();
+        t1.localPosition = pos;
+        t1.rotateTowards([0, 1, 0], dir);
+        let cylinder = new GameObject(t1, cylinderMesh, assets.materials.white, shader);
     }
 
     let coolCube = new GameObject(new Transform().translate([0, 0.5, 0]), cubeMesh, assets.materials.red, shader);
@@ -59,10 +54,7 @@ function main() {
     outerSphere.invertNormals(gl);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
     let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
-
-
     let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
-
     let bodyMat = mat4.create();
     mat4.scale(bodyMat, bodyMat, [3., 3., 8]);
     mat4.rotate(bodyMat, bodyMat, Math.PI / 4., [1, 1, 0.]);
@@ -93,6 +85,7 @@ function drawScene(gl, deltaTime, state) {
 
     state.character.update(state, deltaTime);
     state.snake.update(state, deltaTime);
+
     //update last light as current character position
     state.lights[3*state.nol] = state.character.transform1.globalPosition[0];
     state.lights[1+3*state.nol] = state.character.transform1.globalPosition[1];
@@ -100,7 +93,16 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol]=0.0;
     state.lColor[1+3*state.nol]=1.0;
     state.lColor[2+3*state.nol]=0.0;
-    state.lStrength[state.nol]=0.5;
+    state.lStrength[state.nol]=1.0;
+
+    //we can have a light on the snakes head! :D
+    state.lights[3*state.nol+3] = state.snake.gameObject.transform.globalPosition[0];
+    state.lights[4+3*state.nol] = state.snake.gameObject.transform.globalPosition[1];
+    state.lights[5+3*state.nol] = state.snake.gameObject.transform.globalPosition[2];
+    state.lColor[3*state.nol+3]=1.0;
+    state.lColor[4+3*state.nol]=0.0;
+    state.lColor[5+3*state.nol]=0.0;
+    state.lStrength[state.nol+1]=1.0;
 
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
@@ -116,18 +118,15 @@ function drawScene(gl, deltaTime, state) {
         gl.uniformMatrix4fv(object.shader.uniformLocations.uViewMatrix, false, m1);
         gl.uniformMatrix4fv(object.shader.uniformLocations.uModelMatrix, false, m2);
         gl.uniformMatrix4fv(object.shader.uniformLocations.uNormalMatrix, false, m3);
-
         gl.uniform3fv(object.shader.uniformLocations.diffuse, object.material.diffuse);
-
         gl.uniform3fv(object.shader.uniformLocations.ambient, object.material.ambient);
         gl.uniform3fv(object.shader.uniformLocations.specular, object.material.specular);
         gl.uniform3fv(object.shader.uniformLocations.camPos, state.character.transform1.globalPosition);
         gl.uniform1f(object.shader.uniformLocations.nCoeff, object.material.n);
-
         gl.uniform3fv(object.shader.uniformLocations.lightPos, state.lights);
         gl.uniform3fv(object.shader.uniformLocations.lColor, state.lColor);
         gl.uniform1fv(object.shader.uniformLocations.lStrength, state.lStrength);
-        gl.uniform1i(object.shader.uniformLocations.nLights, state.nol+1);//+1 for the character light
+        gl.uniform1i(object.shader.uniformLocations.nLights, state.nol+2);//+1 for the character light
 
         gl.bindVertexArray(object.mesh.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, object.mesh.numVertices);
