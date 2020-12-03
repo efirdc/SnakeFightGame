@@ -18,7 +18,10 @@ function main() {
         lColor: new Float32Array(42 * 3),
         lStrength: new Float32Array(42),
         nol: 0,
-        columns: new Float32Array(30),
+        columns: new Float32Array(30 * 3),
+        noc: 10,
+        ground: 200.0,
+        ceiling: 800,
     };
 
     // Setting up the lights, in a beautiful circle
@@ -35,10 +38,14 @@ function main() {
 
     let shader = transformShader(gl);
     let cubeMesh = new Mesh(gl, "models/cube.obj");
-    let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
+    let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
+    let outerSphere = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]));
+    outerSphere.invertNormals(gl);
+    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
+    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
 
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < state.noc; i++) {
         let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
         vec3.normalize(dir, dir);
         state.columns[3*i]=dir[0];state.columns[3*i+1]=dir[1];state.columns[3*i+2]=dir[2];
@@ -49,11 +56,6 @@ function main() {
         let cylinder = new GameObject(t1, cylinderMesh, assets.materials.white, shader);
     }
 
-    let coolCube = new GameObject(new Transform().translate([0, 0.5, 0]), cubeMesh, assets.materials.red, shader);
-    let outerSphere = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[800.0,800.0,800.0]));
-    outerSphere.invertNormals(gl);
-    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
-    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
     let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
     let bodyMat = mat4.create();
     mat4.scale(bodyMat, bodyMat, [3., 3., 8]);

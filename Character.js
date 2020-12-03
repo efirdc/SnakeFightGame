@@ -53,10 +53,10 @@ class Character {
 
         let localVelocity = this.transform1.inverseTransformVector(this.velocity);
 
-        if (vec3.length(this.transform1.globalPosition) < 201.0) {
+        if (vec3.length(this.transform1.globalPosition) < state.ground+1) {
             localVelocity[1] = 0.;
             let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
-            vec3.scale(newPosition, newPosition, 201.);
+            vec3.scale(newPosition, newPosition, state.ground+1);
             this.transform1.localPosition = newPosition;
         }
 
@@ -64,10 +64,10 @@ class Character {
             localVelocity[1] += 0.25;
         }
         
-        if (vec3.length(this.transform1.globalPosition) > 799.0) {
+        if (vec3.length(this.transform1.globalPosition) > state.ceiling-1) {
             localVelocity[1] = 0.;
             let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
-            vec3.scale(newPosition, newPosition, 799.);
+            vec3.scale(newPosition, newPosition, state.ceiling-1);
             this.transform1.localPosition = newPosition;
         }
  
@@ -87,12 +87,10 @@ class Character {
 
     handleWorldCollision(state){
         //column collision
-        for (let i=0; i<state.columns.length; i++){
+        for (let i=0; i<(state.noc*3); i++){
             let height=vec3.length(this.transform1.globalPosition);
             let dColumn=vec3.normalize(vec3.create(),vec3.fromValues(state.columns[3*i],state.columns[3*i+1],state.columns[3*i+2]));//get the direction of the column
             let center = vec3.scale(vec3.create(),dColumn,height);
-           // vec3.scale(dColumn,dColumn,height);//get the closest centre point
-           // vec3.negate(dColumn,dColumn);//the vector between centre and where we are
             vec3.negate(dColumn,center);
             vec3.add(dColumn,dColumn,this.transform1.globalPosition);
             if (vec3.length(dColumn)<10){
