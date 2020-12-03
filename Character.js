@@ -1,5 +1,5 @@
 class Character {
-    constructor(position) {
+    constructor(gl,shader,position) {
         // transform1 handles character translation, up direction, and left/right look
         this.transform1 = new Transform().translate(position);
 
@@ -8,6 +8,9 @@ class Character {
         this.transform2.setParent(this.transform1);
 
         this.velocity = vec3.create();
+
+        let aMesh= new Mesh(gl, "models/point.obj");
+        this.model = new GameObject(new Transform().translate(position), aMesh,assets.materials.white, shader);
     }
 
     get transform() {
@@ -48,9 +51,10 @@ class Character {
         let maxRotation = maxAltitude - altitude;
         let minRotation = -maxAltitude - altitude;
         rotationAmount = Math.clamp(rotationAmount, minRotation, maxRotation);
-        if (Math.abs(rotationAmount) > 1e-5)
+        if (Math.abs(rotationAmount) > 1e-5){
             this.transform2.rotate([1, 0, 0], rotationAmount);
-
+            this.model.transform.rotate([1,0,0],rotationAmount);
+        }
         let localVelocity = this.transform1.inverseTransformVector(this.velocity);
 
         if (vec3.length(this.transform1.globalPosition) < state.ground+1) {
@@ -82,6 +86,7 @@ class Character {
 
         let scaledVelocity = vec3.scale(vec3.create(), this.velocity, timeScale);
         this.transform1.translate(scaledVelocity);
+        this.model.transform.translate(scaledVelocity);
         this.handleWorldCollision(state);
     }
 
