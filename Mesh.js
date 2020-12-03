@@ -1,20 +1,28 @@
 class Mesh {
-    constructor(gl, meshData, matrix=undefined) {
+    constructor(gl, filePath, matrix=undefined, invertNormals=false) {
 
         let vertices = [];
         let normals = [];
-        if (typeof meshData === 'string') {
-            meshData = parseOBJFileToJSON(meshData);
-//            console.log(meshData);
-            for (let i = 0; i < Math.floor(meshData.vertices.length / 3); i++) {
-                vertices.push([meshData.vertices[3*i], meshData.vertices[3*i + 1], meshData.vertices[3*i + 2]]);
-                normals.push([meshData.normals[3*i], meshData.normals[3*i + 1], meshData.normals[3*i + 2]]);
-            }
-           // console.log("normals:"+normals);
+        let meshData = parseOBJFileToJSON(filePath);
 
-        } else {
-            vertices = meshData.vertices.map(v => [...v]);
-            normals = meshData.normals.map(v => [...v]);
+        for (let i = 0; i < Math.floor(meshData.vertices.length / 3); i++) {
+            vertices.push([meshData.vertices[3*i], meshData.vertices[3*i + 1], meshData.vertices[3*i + 2]]);
+            normals.push([meshData.normals[3*i], meshData.normals[3*i + 1], meshData.normals[3*i + 2]]);
+        }
+        if (invertNormals) {
+            normals.forEach(normal => vec3.negate(normal, normal));
+            let newNormals = [];
+            let newVertices = [];
+            for (let i = 0; i < Math.floor(normals.length / 3); i++) {
+                newNormals.push(normals[3*i + 1]);
+                newNormals.push(normals[3*i]);
+                newNormals.push(normals[3*i + 2]);
+                newVertices.push(vertices[3*i + 1]);
+                newVertices.push(vertices[3*i]);
+                newVertices.push(vertices[3*i + 2]);
+            }
+            normals = newNormals;
+            vertices = newVertices;
         }
 
         // Apply an optional matrix transformation to the vertices.
@@ -47,30 +55,5 @@ class Mesh {
         gl.bufferData(gl.ARRAY_BUFFER, this.normalArray, gl.STATIC_DRAW);
         gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(1);
-    }
-    invertNormals(gl){
-       /* for (let i = 0; i<this.normalArray.length;i++){
-            this.normalArray[i] = -this.normalArray[i];
-        }*/
-        for (let i=0;i<this.vertexArray.length/3;i++){
-            let tmp1 = this.vertexArray[3*i];
-            let tmp2 = this.normalArray[3*i];
-            this.normalArray[3*i+2]=-this.normalArray[3*i+2];
-            this.vertexArray[3*i]=this.vertexArray[3*i+1];
-            this.normalArray[3*i]=-this.normalArray[3*i+1];
-            this.vertexArray[3*i+1]=tmp1;
-            this.normalArray[3*i+1]=-tmp2;
-        }
-        const normalBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.normalArray, gl.STATIC_DRAW);
-        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(1);
-
-        const vertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.vertexArray, gl.STATIC_DRAW);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(0);
     }
 }

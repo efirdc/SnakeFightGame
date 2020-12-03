@@ -40,8 +40,8 @@ function main() {
     let cubeMesh = new Mesh(gl, "models/cube.obj");
     let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
-    let outerSphere = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]));
-    outerSphere.invertNormals(gl);
+    let outerSphere = new Mesh(gl,"models/sphere8.obj",
+        mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
     let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
 
