@@ -110,12 +110,21 @@ class Character {
     }
 
     snakeCollision(state){
-        let head = state.snake.gameObject.transform.globalPosition;
-        let distance = this.transform1.globalPosition;
-        vec3.negate(distance,distance);
-        vec3.add(distance, distance, head);
-        if (vec3.length(distance)<20){
+        let snake = state.snake;
+        let position = this.transform1.globalPosition;
+        let distance = vec3.create();
+        vec3.negate(position,position);
+        vec3.add(distance, position, snake.gameObject.transform.globalPosition);
+        if (vec3.length(distance)<10){
             console.log("OWW, YA GOT ME");
+        }
+        snake = snake.tail;
+        while (snake){
+            vec3.add(distance,position, snake.gameObject.transform.globalPosition);
+            if (vec3.length(distance)<10){
+                console.log("YOURE TOUCHING THE SNAKES BUTT");
+            }
+            snake=snake.tail;
         }
     }
 }
