@@ -86,7 +86,11 @@ class Character {
     }
 
     handleWorldCollision(state){
-        //column collision
+        this.columnCollision(state);
+        this.snakeCollision(state);
+    }
+
+    columnCollision(state){
         for (let i=0; i<(state.noc*3); i++){
             let height=vec3.length(this.transform1.globalPosition);
             let dColumn=vec3.normalize(vec3.create(),vec3.fromValues(state.columns[3*i],state.columns[3*i+1],state.columns[3*i+2]));//get the direction of the column
@@ -102,6 +106,16 @@ class Character {
                 this.transform1.localPosition = center;
                 //still need to correct velocity
             }
+        }
+    }
+
+    snakeCollision(state){
+        let head = state.snake.gameObject.transform.globalPosition;
+        let distance = this.transform1.globalPosition;
+        vec3.negate(distance,distance);
+        vec3.add(distance, distance, head);
+        if (vec3.length(distance)<20){
+            console.log("OWW, YA GOT ME");
         }
     }
 }
