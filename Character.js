@@ -38,7 +38,7 @@ class Character {
 
         let rotAxis = vec3.cross(vec3.create(), upDirection, this.transform1.up);
         let angleDifference = Math.acos(Math.clamp(vec3.dot(upDirection, this.transform1.up), -1., 1.));
-        this.transform1.rotate(rotAxis, -angleDifference * 0.005, Space.WORLD);
+        this.transform1.rotate(rotAxis, -angleDifference, Space.WORLD);
 
         // Left/right look
         this.transform1.rotate(upDirection, deltaMouse[0] * Math.PI * -0.001, Space.WORLD);
@@ -96,20 +96,21 @@ class Character {
     }
 
     columnCollision(state){
+        const columnRadius = 11;
+
         for (let i=0; i<(state.noc*3); i++){
-            let height=vec3.length(this.transform1.globalPosition);
             let dColumn=vec3.normalize(vec3.create(),vec3.fromValues(state.columns[3*i],state.columns[3*i+1],state.columns[3*i+2]));//get the direction of the column
-            let center = vec3.scale(vec3.create(),dColumn,height);
-            vec3.negate(dColumn,center);
-            vec3.add(dColumn,dColumn,this.transform1.globalPosition);
-            if (vec3.length(dColumn)<10){
-                console.log(vec3.length(dColumn)); //indicates it works
-                //This position correction works
-                vec3.normalize(dColumn,dColumn);
-                vec3.scale(dColumn, dColumn, 11);
-                vec3.add(center, dColumn, center);
-                this.transform1.localPosition = center;
-                //still need to correct velocity
+            let scalarProj = vec3.dot(dColumn,this.transform1.globalPosition);
+            let center = vec3.scale(vec3.create(),dColumn, scalarProj);
+
+            let deltaCenter = vec3.sub(dColumn, this.transform1.globalPosition, center);
+            let centerDist = vec3.length(deltaCenter);
+
+            if (centerDist < columnRadius){
+                let deltaDir = vec3.normalize(vec3.create(), deltaCenter);
+                let overlap = columnRadius - centerDist;
+                let translationVector = vec3.scale(vec3.create(), deltaDir, overlap);
+                this.transform1.translate(translationVector);
             }
         }
     }
