@@ -38,7 +38,7 @@ function main() {
     let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[200.0,200.0,200.0]));
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
 
-    for (i = 0; i < 1; i++) {
+    for (i = 0; i < 10; i++) {
         let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
         vec3.normalize(dir, dir);
         state.columns[3*i]=dir[0];state.columns[3*i+1]=dir[1];state.columns[3*i+2]=dir[2];
