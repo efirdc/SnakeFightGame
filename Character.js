@@ -9,13 +9,17 @@ class Character {
 
         this.velocity = vec3.create();
 
-        let aMesh = new Mesh(gl, "models/Spartan_Sword.obj");
-        this.model = new GameObject(new Transform(), aMesh,assets.materials.red, shader);
-        this.model.transform.translate([-0.65, -0.45, -1.5]);
-        this.model.transform.rotate([0,0,1], Math.PI/2); 
-        this.model.transform.rotate([0,1,0], -Math.PI/1.5);
-        this.model.transform.scaleBy([0.1,0.1,0.1]);
-        this.model.transform.setParent(this.transform2);
+        let meshMat = mat4.create();
+        mat4.rotate(meshMat, meshMat, Math.PI * 0.5, [0, 1, 0]);
+        mat4.rotate(meshMat, meshMat, Math.PI, [0, 0, 1]);
+        //mat4.scale(meshMat, meshMat, [0.5, 0.5, 0.,5]);
+        mat4.translate(meshMat, meshMat, [-5, -1, 0]);
+        let aMesh = new Mesh(gl, "models/Spartan_Sword.obj", meshMat);
+        this.model = new GameObject(new Transform(), aMesh,assets.materials.white, shader);
+        //this.model.transform.rotate([0,0,1], Math.PI/2);
+        //this.model.transform.rotate([0,1,0], -Math.PI/1.5);
+        //this.model.transform.scaleBy([0.1,0.1,0.1]);
+        this.model.transform.setParent(this.transform1);
 
         this.onGround = false;
     }
@@ -55,7 +59,7 @@ class Character {
 
         // Up/down look
         let rotationAmount = deltaMouse[1] * Math.PI * -0.001;
-        let lookAxis = this.transform2.back;
+        let lookAxis = vec3.transformMat4(vec3.create(), [0, 0, -1], this.transform2.localRotation);
         let altitude = Math.asin(Math.clamp(lookAxis[1], -1., 1.));
         let maxAltitude = Math.PI * 0.5 - 1e-3;
         let maxRotation = maxAltitude - altitude;
@@ -94,8 +98,8 @@ class Character {
         let frictionVector = vec3.scale(vec3.create(), tangentVelocityNormalized, squareVelocity * frictionCoeff * timeScale);
         vec3.add(localVelocity, localVelocity, frictionVector);
 
-        if (!this.onGround)
-            moveAxis[0] = 0.;
+        //if (!this.onGround)
+        //    moveAxis[0] = 0.;
 
         vec3.scaleAndAdd(localVelocity, localVelocity, moveAxis, acceleration * timeScale);
         this.velocity = this.transform1.transformVector(localVelocity);
@@ -116,6 +120,8 @@ class Character {
         for (let i=0; i<(state.noc*3); i++){
             let dColumn=vec3.normalize(vec3.create(),vec3.fromValues(state.columns[3*i],state.columns[3*i+1],state.columns[3*i+2]));//get the direction of the column
             let scalarProj = vec3.dot(dColumn,this.transform1.globalPosition);
+            if (scalarProj < 0.)
+                continue;
             let center = vec3.scale(vec3.create(),dColumn, scalarProj);
 
             let deltaCenter = vec3.sub(dColumn, this.transform1.globalPosition, center);
