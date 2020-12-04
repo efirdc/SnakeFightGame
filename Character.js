@@ -91,6 +91,9 @@ class Character {
         let frictionVector = vec3.scale(vec3.create(), tangentVelocityNormalized, squareVelocity * frictionCoeff * timeScale);
         vec3.add(localVelocity, localVelocity, frictionVector);
 
+        if (!this.onGround)
+            moveAxis[0] = 0.;
+
         vec3.scaleAndAdd(localVelocity, localVelocity, moveAxis, acceleration * timeScale);
         this.velocity = this.transform1.transformVector(localVelocity);
 
