@@ -78,7 +78,7 @@ class Transform {
 
     // Lazy assumption: Parent is only set once when this transform is in world space and unscaled
     // A better implementation would allow for re-parenting that maintains world transform
-    setParent(parent, preserveSpace=Space.WORLD) {
+    setParent(parent, preserveSpace=Space.LOCAL) {
         if (preserveSpace === Space.WORLD) {
             vec3.transformMat4(this._position, this._position, parent.worldToLocalMatrix);
             mat4.mul(this._rotation, parent.localToWorldRotation, this._rotation);

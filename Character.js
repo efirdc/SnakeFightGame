@@ -4,13 +4,17 @@ class Character {
         this.transform1 = new Transform().translate(position);
 
         // transform2 is a child of transform1, and handles up/down look
-        this.transform2 = new Transform().translate(position);
+        this.transform2 = new Transform();
         this.transform2.setParent(this.transform1);
 
         this.velocity = vec3.create();
 
-        let aMesh= new Mesh(gl, "models/point.obj");
-        this.model = new GameObject(new Transform().translate(position), aMesh,assets.materials.white, shader);
+        //let aMesh = new Mesh(gl, "models/point.obj");
+        //this.model = new GameObject(new Transform(), aMesh,assets.materials.white, shader);
+        //this.model.transform.translate([-0.5, -0.5, -0.5]);
+        //this.model.transform.setParent(this.transform1);
+
+        this.onGround = false;
     }
 
     get transform() {
@@ -20,8 +24,11 @@ class Character {
     update(state, deltaTime) {
         let timeScale = Math.min(deltaTime, 1 / 20) * 60;
         const acceleration = 0.1;
-        const frictionCoeff = -0.5;
+        const groundedFrictionCoeff = -0.5;
+        const aerialFrictionCoeff = -0.1;
         const gravity = -0.01;
+        const jumpPower = 0.5;
+        const jumpBoost = 1.2;
 
         // Handle inputs
         let inputHandler = state.inputHandler;
@@ -44,7 +51,7 @@ class Character {
         this.transform1.rotate(upDirection, deltaMouse[0] * Math.PI * -0.001, Space.WORLD);
 
         // Up/down look
-        let rotationAmount = deltaMouse[1] * Math.PI * -0.001;
+        let rotationAmount = deltaMouse[1] * Math.PI * -0.001 * timeScale;
         let lookAxis = this.transform2.back;
         let altitude = Math.asin(Math.clamp(lookAxis[1], -1., 1.));
         let maxAltitude = Math.PI * 0.5 - 1e-3;
@@ -53,19 +60,21 @@ class Character {
         rotationAmount = Math.clamp(rotationAmount, minRotation, maxRotation);
         if (Math.abs(rotationAmount) > 1e-5){
             this.transform2.rotate([1, 0, 0], rotationAmount);
-            this.model.transform.rotate([1,0,0],rotationAmount);
         }
         let localVelocity = this.transform1.inverseTransformVector(this.velocity);
 
         if (vec3.length(this.transform1.globalPosition) < state.ground+1) {
+            this.onGround = true;
             localVelocity[1] = 0.;
             let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
             vec3.scale(newPosition, newPosition, state.ground+1);
             this.transform1.localPosition = newPosition;
         }
 
-        if (inputHandler.isKeyPressed("Space")){
-            localVelocity[1] += 0.25;
+        if (inputHandler.isKeyHeld("Space") && this.onGround) {
+            this.onGround = false;
+            localVelocity[1] += jumpPower;
+            localVelocity[2] *= jumpBoost;
         }
         
         if (vec3.length(this.transform1.globalPosition) > state.ceiling-1) {
@@ -78,6 +87,7 @@ class Character {
         let tangentVelocity = vec3.fromValues(localVelocity[0], 0., localVelocity[2]);
         let squareVelocity = vec3.dot(tangentVelocity, tangentVelocity);
         let tangentVelocityNormalized = vec3.normalize(tangentVelocity, tangentVelocity);
+        let frictionCoeff = this.onGround ? groundedFrictionCoeff : aerialFrictionCoeff;
         let frictionVector = vec3.scale(vec3.create(), tangentVelocityNormalized, squareVelocity * frictionCoeff * timeScale);
         vec3.add(localVelocity, localVelocity, frictionVector);
 
@@ -86,7 +96,6 @@ class Character {
 
         let scaledVelocity = vec3.scale(vec3.create(), this.velocity, timeScale);
         this.transform1.translate(scaledVelocity);
-        this.model.transform.translate(scaledVelocity);
         this.handleWorldCollision(state);
     }
 
