@@ -29,11 +29,11 @@ function main() {
 //    let shader = transformShader(gl);
 
     let cubeMesh = new Mesh(gl, "models/cube.obj");
-    let sphereMesh = new Mesh(gl,"models/sphere6.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
+    let sphereMesh = new Mesh(gl,"models/sphere6S.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
     let outerSphere = new Mesh(gl,"models/sphere6.obj",
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
-    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.grey, shader);
+    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.beige, shader);
     let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
 
     for (i = 0; i < state.noc; i++) {
@@ -88,7 +88,7 @@ function drawScene(gl, deltaTime, state) {
         state.lColor[3*i]=1.0//Math.sin(now/10);//red values
         state.lColor[1+3*i]=1.0//Math.cos(now/10);//-i/3;//green values
         state.lColor[2+3*i]=1.0//i/3;//blue values
-        state.lStrength[i]=20.0;//strength values
+        state.lStrength[i]=1.0;//strength values
     }
 
 
