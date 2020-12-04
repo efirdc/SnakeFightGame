@@ -38,14 +38,18 @@ class Snake {
     }
 
     update(state, deltaTime, headVelocity=undefined) {
+        let timeScale = Math.min(deltaTime, 1 / 20) * 60;
         let currPos = this.gameObject.transform.globalPosition;
 
         if (this.isHead) {
             let upDirection = vec3.normalize(vec3.create(), this.gameObject.transform.globalPosition);
-            if (vec3.length(this.gameObject.transform.globalPosition) > 200.)
-                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, -0.001);
+            let dist = vec3.length(this.gameObject.transform.globalPosition);
+            if (dist > state.ground)
+                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, -0.001 * timeScale);
+            else if (dist < state.ceiling)
+                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, -0.003 * timeScale);
             else
-                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, 0.003);
+                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, 0.003 * timeScale);
 
             vec3.sub(this.tailDir, currPos, this.tail.gameObject.transform.globalPosition);
             vec3.normalize(this.tailDir, this.tailDir);
@@ -74,7 +78,7 @@ class Snake {
             vec3.sub(this.headDir, currPos, headPos);
             vec3.normalize(this.headDir, this.headDir);
 
-            if (vec3.length(this.gameObject.transform.globalPosition) > 195.) {
+            if (vec3.length(this.gameObject.transform.globalPosition) > (state.ground - 0.5)) {
                 let minConeAngle = Math.PI * 45 / 180.;
                 let maxConeAngle = Math.PI * 45 / 180.;
                 let proj = Math.clamp(vec3.dot(coneDir, this.headDir), -1. + 1e-5, 1. - 1e-5);

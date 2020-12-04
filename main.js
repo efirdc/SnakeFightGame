@@ -9,9 +9,10 @@ function main() {
             'Check to see you are using a <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#WebGL_2_2" class="alert-link">modern browser</a>.');
         return;
     }
+    let g = 400;
     let shader = transformShader(gl);
     let state = {
-        character: new Character(gl, shader, vec3.fromValues(0.0, 200.5, 0.5)),
+        character: new Character(gl, shader, vec3.fromValues(0.0, g + 0.5, 0.5)),
         inputHandler: new InputHandler(),
         canvas: canvas,
         lights: new Float32Array(42 * 3),
@@ -20,8 +21,8 @@ function main() {
         nol: 0,
         columns: new Float32Array(30 * 3),
         noc: 10,
-        ground: 200.0,
-        ceiling: 800,
+        ground: g,
+        ceiling: 650,
     };
 
     // Setting up the lights, in a beautiful circle
@@ -37,10 +38,11 @@ function main() {
     }
 
 //    let shader = transformShader(gl);
+
     let cubeMesh = new Mesh(gl, "models/cube.obj");
-    let sphereMesh = new Mesh(gl,"models/sphere8.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
+    let sphereMesh = new Mesh(gl,"models/sphere6.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
-    let outerSphere = new Mesh(gl,"models/sphere8.obj",
+    let outerSphere = new Mesh(gl,"models/sphere6.obj",
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
     let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
@@ -49,7 +51,7 @@ function main() {
         let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
         vec3.normalize(dir, dir);
         state.columns[3*i]=dir[0];state.columns[3*i+1]=dir[1];state.columns[3*i+2]=dir[2];
-        let pos = vec3.scale(vec3.create(), dir, 600);
+        let pos = vec3.scale(vec3.create(), dir, (state.ground + state.ceiling) * 0.5);
         let t1 = new Transform();
         t1.localPosition = pos;
         t1.rotateTowards([0, 1, 0], dir);
@@ -115,7 +117,7 @@ function drawScene(gl, deltaTime, state) {
 
         let m1 = state.character.transform.worldToLocalMatrix;
         let m2 = object.transform.localToWorldMatrix;
-        let m3 = object.transform.normalMatrix
+        let m3 = object.transform.normalMatrix;
         gl.uniformMatrix4fv(object.shader.uniformLocations.uProjectionMatrix, false, projectionMatrix);
         gl.uniformMatrix4fv(object.shader.uniformLocations.uViewMatrix, false, m1);
         gl.uniformMatrix4fv(object.shader.uniformLocations.uModelMatrix, false, m2);
