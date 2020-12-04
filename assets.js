@@ -21,5 +21,6 @@ const assets = {
         green: {ambient: [0.0,0.0,0.0], diffuse: [0.0,1,0.0], specular: [1, 1, 1], n: 20.0},
         white: {ambient: [0.0,0.0,0.0], diffuse: [0.9,0.9,0.9], specular: [1, 1, 1], n: 60.0},
         black: {ambient: [0.0,0.0,0.0], diffuse: [0.01,0.01,0.01], specular: [1, 1, 1], n: 5.0},
+        beige:{ambient: [0.05,0.05,0.03], diffuse: [0.2,0.2,0.17], specular: [0.2,0.2,0.15], n:2.0 }
     }
 };

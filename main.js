@@ -18,24 +18,13 @@ function main() {
         lights: new Float32Array(42 * 3),
         lColor: new Float32Array(42 * 3),
         lStrength: new Float32Array(42),
-        nol: 0,
+        nol: 6,
         columns: new Float32Array(30 * 3),
         noc: 10,
         ground: g,
         ceiling: 650,
     };
 
-    // Setting up the lights, in a beautiful circle
-    state.nol = 5; // Number Of Lights
-    for (var i=0;i<state.nol;i++){
-        state.lights[3*i] = 500.0*Math.cos(2*i*Math.PI/state.nol);//x values
-        state.lights[1+3*i] = 510.;
-        state.lights[2+3*i] = 500.0*Math.sin(2*i*Math.PI/state.nol);
-        state.lColor[3*i]=1.0//1.0-i/3;//red values
-        state.lColor[1+3*i]=1.0;//-i/3;//green values
-        state.lColor[2+3*i]=1.0//i/3;//blue values
-        state.lStrength[i]=1.0;//strength values
-    }
 
 //    let shader = transformShader(gl);
 
@@ -44,7 +33,7 @@ function main() {
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
     let outerSphere = new Mesh(gl,"models/sphere6.obj",
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
-    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.white, shader);
+    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.grey, shader);
     let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
 
     for (i = 0; i < state.noc; i++) {
@@ -55,7 +44,7 @@ function main() {
         let t1 = new Transform();
         t1.localPosition = pos;
         t1.rotateTowards([0, 1, 0], dir);
-        let cylinder = new GameObject(t1, cylinderMesh, assets.materials.white, shader);
+        let cylinder = new GameObject(t1, cylinderMesh, assets.materials.beige, shader);
     }
 
     let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
@@ -90,6 +79,19 @@ function drawScene(gl, deltaTime, state) {
     state.character.update(state, deltaTime);
     state.snake.update(state, deltaTime);
 
+    for (var i=0;i<state.nol;i++){
+        let now = Date.now()/1000;
+        let lHeight = (state.ceiling-state.ground)/2+state.ground;
+        state.lights[3*i] = (lHeight)*Math.cos(now+2*i*Math.PI/state.nol);//x values
+        state.lights[1+3*i] = (lHeight)*Math.cos(i*Math.PI);
+        state.lights[2+3*i] = (lHeight)*Math.sin(now+2*i*Math.PI/state.nol);
+        state.lColor[3*i]=1.0//Math.sin(now/10);//red values
+        state.lColor[1+3*i]=1.0//Math.cos(now/10);//-i/3;//green values
+        state.lColor[2+3*i]=1.0//i/3;//blue values
+        state.lStrength[i]=20.0;//strength values
+    }
+
+
     //update last light as current character position
     state.lights[3*state.nol] = state.character.transform1.globalPosition[0];
     state.lights[1+3*state.nol] = state.character.transform1.globalPosition[1];
@@ -98,6 +100,7 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[1+3*state.nol]=1.0;
     state.lColor[2+3*state.nol]=1.0;
     state.lStrength[state.nol]=0.75;
+
 
     //we can have a light on the snakes head! :D
     state.lights[3*state.nol+3] = state.snake.gameObject.transform.globalPosition[0];

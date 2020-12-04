@@ -9,10 +9,13 @@ class Character {
 
         this.velocity = vec3.create();
 
-        //let aMesh = new Mesh(gl, "models/point.obj");
-        //this.model = new GameObject(new Transform(), aMesh,assets.materials.white, shader);
-        //this.model.transform.translate([-0.5, -0.5, -0.5]);
-        //this.model.transform.setParent(this.transform1);
+        let aMesh = new Mesh(gl, "models/Spartan_Sword.obj");
+        this.model = new GameObject(new Transform(), aMesh,assets.materials.red, shader);
+        this.model.transform.translate([-0.65, -0.45, -1.5]);
+        this.model.transform.rotate([0,0,1], Math.PI/2); 
+        this.model.transform.rotate([0,1,0], -Math.PI/1.5);
+        this.model.transform.scaleBy([0.1,0.1,0.1]);
+        this.model.transform.setParent(this.transform2);
 
         this.onGround = false;
     }
