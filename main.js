@@ -9,7 +9,7 @@ function main() {
             'Check to see you are using a <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#WebGL_2_2" class="alert-link">modern browser</a>.');
         return;
     }
-    let g = 400;
+    let g = 250;
     let shader = transformShader(gl);
     let state = {
         character: new Character(gl, shader, vec3.fromValues(0.0, g + 0.5, 0.5)),
@@ -24,6 +24,7 @@ function main() {
         ground: g,
         ceiling: 650,
     };
+
 
 //    let shader = transformShader(gl);
 
@@ -98,7 +99,8 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol]=1.0;
     state.lColor[1+3*state.nol]=1.0;
     state.lColor[2+3*state.nol]=1.0;
-    state.lStrength[state.nol]=1.0;
+    state.lStrength[state.nol]=0.75;
+
 
     //we can have a light on the snakes head! :D
     state.lights[3*state.nol+3] = state.snake.gameObject.transform.globalPosition[0];
@@ -107,7 +109,7 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol+3]=1.0;
     state.lColor[4+3*state.nol]=0.0;
     state.lColor[5+3*state.nol]=0.0;
-    state.lStrength[state.nol+1]=1.0;
+    state.lStrength[state.nol+1]=1.5;
 
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
@@ -148,7 +150,7 @@ function transformShader(gl) {
     in vec3 aNormal;
     
     out vec4 fragPos;
-    out vec3 N;
+    out vec3 oN;
 
     uniform mat4 uProjectionMatrix;
     uniform mat4 uViewMatrix;
@@ -156,7 +158,7 @@ function transformShader(gl) {
     uniform mat4 uNormalMatrix;
  
     void main() {
-        N = mat3(uNormalMatrix) * aNormal;
+        oN = mat3(uNormalMatrix) * aNormal;
         fragPos = uModelMatrix * vec4(aPosition, 1.0);
         gl_Position =  uProjectionMatrix * uViewMatrix * fragPos;
     }
@@ -167,7 +169,7 @@ function transformShader(gl) {
     precision highp float;
 
     out vec4 fragColor;
-    in vec3 N;
+    in vec3 oN;
     in vec4 fragPos;
     
     uniform vec3 diffuse;
@@ -181,23 +183,27 @@ function transformShader(gl) {
     uniform float[42] lStrength;
 
     vec3 combineLights(){
+        vec3 N = normalize(oN);
         vec3 outColor = vec3(0);
         for (int i=0;i<nLights;i++) { 
+            
             //ambient term
             vec3 aTerm = ambient*lColor[i]*lStrength[i];
             
             //diffuse term
             vec3 L = lightPos[i] - fragPos.xyz;
-            float attenuation = clamp(10.0/(length(L)),0.0,1.0);
+            float d = length(L);
+            //float attenuation = 1. / (1. + 0.007 * d + 0.0002 * d * d);
+            float attenuation = 1. / exp( 0.005 * d);
             L = normalize(L);
             float N_dot_L = max(dot(N, L), 0.0);
-            vec3 dTerm = diffuse * N_dot_L * lColor[i];
+            vec3 dTerm = diffuse * N_dot_L * lColor[i] * lStrength[i];
             
             //specular term
             vec3 H = L + normalize(camPos-fragPos.xyz);
             H = normalize(H);
             float spec = pow(max(dot(H,N),0.0),nCoeff);
-            vec3 sTerm = spec*specular*lColor[i];
+            vec3 sTerm = spec*specular*lColor[i] * min(lStrength[i], 1.0);
             
             outColor += (aTerm + sTerm + dTerm)*attenuation;
         }

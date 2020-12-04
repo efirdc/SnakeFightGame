@@ -21,7 +21,7 @@ class Snake {
             this.gameObject = new GameObject(newTransform, bodyMesh, bodyMaterial, shader);
             this.gameObject.material.diffuse = vec3.copy(vec3.create(), this.gameObject.material.diffuse)
         }
-
+        this.transform = this.gameObject.transform;
 
         this.tail = undefined;
         if (numChildren > 0)
@@ -43,32 +43,31 @@ class Snake {
 
         if (this.isHead) {
             let upDirection = vec3.normalize(vec3.create(), this.gameObject.transform.globalPosition);
+            let localUpDirection = this.transform.inverseTransformDirection(upDirection);
             let dist = vec3.length(this.gameObject.transform.globalPosition);
-            if (dist > state.ground)
-                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, -0.001 * timeScale);
-            else if (dist < state.ceiling)
-                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, -0.003 * timeScale);
+            if (dist < state.ground)
+                this.transform.rotateTowards2([0, 0, 1], localUpDirection, 0.005);
+            else if (dist > state.ceiling)
+                this.transform.rotateTowards2([0, 0, -1], localUpDirection, 0.02);
             else
-                vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, 0.003 * timeScale);
+                this.transform.rotateTowards2([0, 0, -1], localUpDirection, 0.0025);
 
-            vec3.sub(this.tailDir, currPos, this.tail.gameObject.transform.globalPosition);
-            vec3.normalize(this.tailDir, this.tailDir);
-            //vec3.scaleAndAdd(this.velocity, this.velocity, this.tailDir, 0.0005);
+            let t = Date.now() * 0.25;
+            let xAngle = Math.sin(3*t + 8) + Math.sin(2*t - 5);
+            let yAngle = Math.sin(3*t - 1) + Math.sin(2*t + 6);
+            this.transform.rotate([1, 0, 0], xAngle * 0.1 * timeScale);
+            this.transform.rotate([0, 1, 0], yAngle * 0.1 * timeScale);
 
-            let targetPos = vec3.scale(vec3.create(), state.character.transform.globalPosition, 0.5);
+            let targetPos = state.character.transform.globalPosition;
             let deltaTarget = vec3.sub(vec3.create(), targetPos, currPos);
             vec3.normalize(deltaTarget, deltaTarget);
-            vec3.scaleAndAdd(this.velocity, this.velocity, deltaTarget, 0.003);
-
-            let sqrMagnitude = vec3.dot(this.velocity, this.velocity);
-            let velocityDir = vec3.normalize(vec3.create(), this.velocity);
-            //vec3.scaleAndAdd(this.velocity, this.velocity, velocityDir, -sqrMagnitude * 0.005);
-
-            let finalVelocity = vec3.scale(vec3.create(), this.velocity, 40.0 * deltaTime);
+            let localDeltaTarget = this.transform.inverseTransformDirection(deltaTarget);
+            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.0125);
+            let finalVelocity = vec3.scale(vec3.create(), this.transform.forward, 2 * timeScale);
             this.gameObject.transform.translate(finalVelocity);
 
-            vec3.normalize(this.headDir, this.velocity);
-            vec3.scale(this.headDir, this.headDir, -1.);
+
+            this.headDir = this.transform.back;
             headVelocity = vec3.length(finalVelocity);
         }
         else {

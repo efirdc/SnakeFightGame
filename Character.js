@@ -28,10 +28,10 @@ class Character {
         let timeScale = Math.min(deltaTime, 1 / 20) * 60;
         const acceleration = 0.1;
         const groundedFrictionCoeff = -0.5;
-        const aerialFrictionCoeff = -0.1;
+        const aerialFrictionCoeff = -0.075;
         const gravity = -0.01;
         const jumpPower = 0.5;
-        const jumpBoost = 1.2;
+        const jumpBoost = 2.;
 
         // Handle inputs
         let inputHandler = state.inputHandler;
@@ -54,7 +54,7 @@ class Character {
         this.transform1.rotate(upDirection, deltaMouse[0] * Math.PI * -0.001, Space.WORLD);
 
         // Up/down look
-        let rotationAmount = deltaMouse[1] * Math.PI * -0.001 * timeScale;
+        let rotationAmount = deltaMouse[1] * Math.PI * -0.001;
         let lookAxis = this.transform2.back;
         let altitude = Math.asin(Math.clamp(lookAxis[1], -1., 1.));
         let maxAltitude = Math.PI * 0.5 - 1e-3;
