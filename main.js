@@ -23,7 +23,7 @@ function main() {
         noc: 10,
         ground: g,
         ceiling: 650,
-        health: 1.0,
+        health: 0.0,
     };
 
 
