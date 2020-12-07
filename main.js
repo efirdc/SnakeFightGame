@@ -23,6 +23,7 @@ function main() {
         noc: 10,
         ground: g,
         ceiling: 650,
+        health: 1.0,
     };
 
 
@@ -134,6 +135,7 @@ function drawScene(gl, deltaTime, state) {
         gl.uniform3fv(object.shader.uniformLocations.lColor, state.lColor);
         gl.uniform1fv(object.shader.uniformLocations.lStrength, state.lStrength);
         gl.uniform1i(object.shader.uniformLocations.nLights, state.nol+2);//+1 for the character light
+        gl.uniform1f(object.shader.uniformLocations.health, state.health);
 
         gl.bindVertexArray(object.mesh.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, object.mesh.numVertices);
@@ -176,6 +178,7 @@ function transformShader(gl) {
     uniform vec3 ambient;
     uniform vec3 specular;
     uniform float nCoeff;
+    uniform float health;
     uniform vec3 camPos;
     uniform int nLights;
     uniform vec3[42] lightPos;
@@ -207,7 +210,11 @@ function transformShader(gl) {
             
             outColor += (aTerm + sTerm + dTerm)*attenuation;
         }
-        return outColor;
+        float grey=(outColor[0]+outColor[1]+outColor[2])/3.0;
+        float red=grey+(outColor[0]-grey)*health;
+        float green=grey+(outColor[1]-grey)*health;
+        float blue=grey+(outColor[2]-grey)*health;
+        return vec3(red,green,blue);
     }
 
     void main() {
@@ -236,6 +243,7 @@ function transformShader(gl) {
             "lColor": gl.getUniformLocation(id,"lColor"),
             "nLights": gl.getUniformLocation(id, "nLights"),
             "lStrength": gl.getUniformLocation(id, "lStrength"),
+            "health": gl.getUniformLocation(id, "health"),
         },
     };
 
