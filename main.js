@@ -24,11 +24,10 @@ function main() {
         ground: g,
         ceiling: 650,
         time: 0.,
+        unscaledTime: 0.,
+        freezeTime: 0.,
         size: new vec2.fromValues(canvas.width, canvas.height),
     };
-
-
-//    let shader = transformShader(gl);
 
     let cubeMesh = new Mesh(gl, "models/cube.obj");
     let sphereMesh = new Mesh(gl,"models/sphere6S.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
@@ -53,7 +52,7 @@ function main() {
         let material = {
             albedo:hsv2rgb(randRange(0, 260), randRange(0.8, 1.0), randRange(0.8, 1.0)),
             metallic: randRange(0.2, 0.6), roughness: randRange(0.2, 0.6),
-        }
+        };
         let cylinder = new GameObject(t1, cylinderMesh, material, shader);
     }
 
@@ -77,6 +76,13 @@ function main() {
 }
 
 function drawScene(gl, deltaTime, state) {
+    state.unscaledTime += deltaTime;
+    if (state.freezeTime > 0.) {
+        state.freezeTime -= deltaTime;
+        deltaTime = 0.;
+    } else {
+        state.freezeTime = 0.;
+    }
     state.time += deltaTime;
     gl.clearColor(0.2, 0.2, 0.2, 1.0);
     gl.enable(gl.DEPTH_TEST);

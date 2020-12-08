@@ -50,11 +50,11 @@ class Snake {
             let localUpDirection = this.transform.inverseTransformDirection(upDirection);
             let dist = vec3.length(this.gameObject.transform.globalPosition);
             if (dist < state.ground)
-                this.transform.rotateTowards2([0, 0, 1], localUpDirection, 0.005);
+                this.transform.rotateTowards2([0, 0, 1], localUpDirection, 0.005 * timeScale);
             else if (dist > state.ceiling)
-                this.transform.rotateTowards2([0, 0, -1], localUpDirection, 0.02);
+                this.transform.rotateTowards2([0, 0, -1], localUpDirection, 0.02 * timeScale);
             else
-                this.transform.rotateTowards2([0, 0, -1], localUpDirection, 0.0025);
+                this.transform.rotateTowards2([0, 0, -1], localUpDirection, 0.0025 * timeScale);
 
             let t = Date.now() * 0.25;
             let xAngle = Math.sin(3*t + 8) + Math.sin(2*t - 5);
@@ -66,7 +66,7 @@ class Snake {
             let deltaTarget = vec3.sub(vec3.create(), targetPos, currPos);
             vec3.normalize(deltaTarget, deltaTarget);
             let localDeltaTarget = this.transform.inverseTransformDirection(deltaTarget);
-            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.0125);
+            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.0125 * timeScale);
             this.velocity = vec3.scale(vec3.create(), this.transform.forward, 2 * timeScale);
             this.gameObject.transform.translate(this.velocity);
 
@@ -98,18 +98,17 @@ class Snake {
                     vec3.transformMat4(this.headDir, this.headDir, rotMatrix);
                 }
             }
-
-            let newPos = vec3.scaleAndAdd(vec3.create(), headPos, this.headDir, this.distance);
-            this.gameObject.transform.localPosition = newPos;
-            vec3.lerp(this.gameObject.material.albedo, this.damagedColor, this.baseColor, this.health);
+            if (timeScale > 0.) {
+                let newPos = vec3.scaleAndAdd(vec3.create(), headPos, this.headDir, this.distance);
+                this.gameObject.transform.localPosition = newPos;
+            }
+            let targetColor = vec3.lerp(vec3.create(), this.damagedColor, this.baseColor, this.health);
+            vec3.lerp(this.gameObject.material.albedo, this.gameObject.material.albedo,
+                targetColor, 0.1);
         }
         if (!this.isTail) {
             this.tail.update(state, deltaTime, headVelocity);
 
-            if (!this.isHead) {
-                let pointyness = (-vec3.dot(this.headDir, this.tail.headDir) + 1.) * 0.5;
-                let flatness = 1 - pointyness;
-            }
 
             let tangent = vec3.add(vec3.create(), this.headDir, this.tail.headDir);
             let normal = vec3.scaleAndAdd(vec3.create(), this.headDir, this.tail.headDir, -1.);

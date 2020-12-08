@@ -33,7 +33,7 @@ const assets = {
             {name: "sounds/step.mp3", volume:0.5},
         ]),
         damage: new RandomSound([
-            {name: "sounds/badsound.mp3", volume:0.5},
+            {name: "sounds/badsound.mp3", volume:0.5, pool:true, numpool:20},
         ]),
     }
 };
