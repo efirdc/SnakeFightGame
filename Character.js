@@ -14,13 +14,13 @@ class Character {
         //mat4.rotate(meshMat, meshMat, Math.PI * 0.5, [0, 1, 0]);
         //mat4.rotate(meshMat, meshMat, Math.PI, [0, 0, 1]);
         mat4.scale(meshMat, meshMat, [0.5, 0.5, 0.5]);
-        let chainSaw = new Mesh(gl, "models/cbody.obj");
+        let chainSaw = new Mesh(gl, "models/bodyFull.obj");
         let t=new Transform();
         t.setParent(this.transform2);
-        t.translate([0.,-2.,-3.]);
+        t.rotate([0.,0.,1],Math.PI/4).rotate([1.,0.,0.],Math.PI/5).translate([-1.,-2.,-3.]);
         this.model = new GameObject(t, chainSaw, assets.materials.chainsawBody, shader);
-        this.chains = [new Mesh(gl, "models/chain1.obj"), new Mesh(gl, "models/chain2.obj"),
-            new Mesh(gl, "models/chain3.obj"), new Mesh(gl, "models/chain4.obj"), new Mesh(gl, "models/chain5.obj")];
+        this.chains = [new Mesh(gl, "models/c1.obj"), new Mesh(gl, "models/c2.obj"),
+            new Mesh(gl, "models/c3.obj"), new Mesh(gl, "models/c4.obj"), new Mesh(gl, "models/c5.obj"), new Mesh(gl, "models/c6.obj"), new Mesh(gl, "models/c7.obj"), new Mesh(gl, "models/c8.obj")];
         this.blade = new GameObject(t, this.chains[0], assets.materials.chainsawChain, shader);
 
 
@@ -94,7 +94,7 @@ class Character {
         const gravity = -0.01;
         const jumpPower = 0.5;
         const jumpBoost = 2.;
-        this.blade.mesh=this.chains[Math.floor(state.time / 0.1) % (this.chains.length-1)]
+        this.blade.mesh=this.chains[Math.floor(state.time / 0.05) % (this.chains.length-1)]
 
         // Handle inputs
         let inputHandler = state.inputHandler;
