@@ -158,7 +158,7 @@ class Character {
             this.onGround = false;
             localVelocity[1] += jumpPower;
             localVelocity[2] *= jumpBoost;
-            this.playRandom("jump");
+            assets.sounds.jump.play();
         }
         
         if (vec3.length(this.transform1.globalPosition) > state.ceiling-1) {
@@ -225,7 +225,7 @@ class Character {
         let timeSinceDamage = state.time - this.damageTime;
         if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
             this.health -= 0.334;
-            this.playRandom("damage");
+            assets.sounds.damage.play();
             vec3.scaleAndAdd(this.velocity, this.velocity, snake.velocity, 10.);
             this.damageTime = state.time;
             if (this.health < 0.) {
