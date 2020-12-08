@@ -15,14 +15,16 @@ class InputHandler {
         this._handleKeyUp = this._handleKeyUp.bind(this);
         this._handleWindowLoseFocus = this._handleWindowLoseFocus.bind(this);
         this._handleMouseDown = this._handleMouseDown.bind(this);
+        this._handleMouseUp = this._handleMouseUp.bind(this);
         this._handleMouseMove = this._handleMouseMove.bind(this);
         this._handlePointerLockChange = this._handlePointerLockChange.bind(this);
         window.addEventListener("keydown", this._handleKeyDown);
         window.addEventListener("keyup", this._handleKeyUp);
         window.addEventListener("blur", this._handleWindowLoseFocus);
         this.canvas.addEventListener("mousedown", this._handleMouseDown);
+        this.canvas.addEventListener("mouseup", this._handleMouseUp);
         this.canvas.addEventListener("mousemove", this._handleMouseMove);
-        document.addEventListener("pointerlockchange", this._handlePointerLockChange)
+        document.addEventListener("pointerlockchange", this._handlePointerLockChange);
     }
 
     _handlePointerLockChange(event) {
@@ -41,6 +43,20 @@ class InputHandler {
         event.preventDefault();
         this.canvas.requestPointerLock();
         this.canvas.requestFullscreen();
+
+        if (event.button === 0)
+            event.code = "MouseLeft";
+        else
+            event.code = "MouseRight";
+        this._handleKeyDown(event)
+    }
+
+    _handleMouseUp(event) {
+        if (event.button === 0)
+            event.code = "MouseLeft";
+        else
+            event.code = "MouseRight";
+        this._handleKeyUp(event)
     }
 
     _handleKeyDown(event) {
@@ -114,4 +130,5 @@ class InputHandler {
             return false;
         return !keyState.held && keyState.frame === this.frame;
     }
+
 }

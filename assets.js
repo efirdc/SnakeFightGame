@@ -16,11 +16,13 @@ const assets = {
     },
     },
     materials: {
-        purple: {ambient: [0.0,0.0,0.0], diffuse: [1,0.0,1], specular: [1, 1, 1], n: 12.0},
-        red: {ambient: [0.0, 0.0, 0.0], diffuse: [1,0.0,0.0], specular: [1, 1, 1], n:5.0},
-        green: {ambient: [0.0,0.0,0.0], diffuse: [0.0,1,0.0], specular: [1, 1, 1], n: 20.0},
-        white: {ambient: [0.0,0.0,0.0], diffuse: [0.9,0.9,0.9], specular: [1, 1, 1], n: 60.0},
-        black: {ambient: [0.0,0.0,0.0], diffuse: [0.01,0.01,0.01], specular: [1, 1, 1], n: 5.0},
-        beige:{ambient: [0.05,0.05,0.03], diffuse: [105/255,75/255,0/255], specular: [0.2,0.2,0.15], n:2.0 }
+        body: {albedo: [0.1,1.0,0.1], metallic: 0.8, roughness: 0.6},
+        red: {albedo: [1,0.0,0.0], metallic: 0.8, roughness: 0.3},
+        green: {albedo: [0.0,1,0.0], metallic: 0.2, roughness: 0.7},
+        white: {albedo: [1.0,1.0,1.0], metallic: 0.3, roughness: 0.2},
+        ground: {albedo: [1,1,1], metallic: 0.1, roughness: 0.05},
+        celing: {albedo: [0,0,0], metallic: 0.8, roughness: 0.2},
+        chainsawBody:{albedo: [105/255,75/255,0/255], metallic: 0.2, roughness: 0.8},
+        chainsawChain:{albedo: [0.1,0.1,0.1], metallic: 1.0, roughness: 0.2},
     }
 };

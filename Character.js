@@ -18,11 +18,12 @@ class Character {
         let t=new Transform();
         t.setParent(this.transform2);
         t.translate([0.,-2.,-3.]);
-        this.model = new GameObject(t, chainSaw, assets.materials.white, shader);
-        this.chains = [new Mesh(gl, "models/chain1.obj"), new Mesh(gl, "models/chain2.obj"), new Mesh(gl, "models/chain3.obj"), new Mesh(gl, "models/chain4.obj"), new Mesh(gl, "models/chain5.obj")];
-        this.blade = new GameObject(t, this.chains[0], assets.materials.red, shader);
+        this.model = new GameObject(t, chainSaw, assets.materials.chainsawBody, shader);
+        this.chains = [new Mesh(gl, "models/chain1.obj"), new Mesh(gl, "models/chain2.obj"),
+            new Mesh(gl, "models/chain3.obj"), new Mesh(gl, "models/chain4.obj"), new Mesh(gl, "models/chain5.obj")];
+        this.blade = new GameObject(t, this.chains[0], assets.materials.chainsawChain, shader);
 
-        
+
        // this.weaponTransform = this.model.transform;
 
         //this.swingTransform = new Transform();
@@ -39,6 +40,8 @@ class Character {
 
         this.health = 1.;
         this.damageTime = 0.;
+        this.attackTime = 0.;
+        this.attackDir = vec2.fromValues(0., 0.);
         this.sounds = this.makeSounds();
     }
     //need to find sounds
@@ -59,7 +62,7 @@ class Character {
         all.push(run);
         return all;
     }
-    
+
     playRandom(input){
         if (input==="strike"){
             this.sounds[0][Math.floor(Math.random()*this.sounds[0].length)].play();
@@ -102,6 +105,14 @@ class Character {
         );
         vec3.normalize(moveAxis, moveAxis);
         let deltaMouse = inputHandler.deltaMouse;
+
+        let timeSinceAttack = state.time - this.attackTime;
+        if (inputHandler.isKeyHeld("LeftMouse") && timeSinceAttack > 1. && !this.dead) {
+            this.attackDir = vec2.fromValues(normalRandom(), normalRandom());
+            this.attackTime = state.time;
+            console.log(this.attackTime, this.attackDir);
+        }
+
 
         if (this.dead) {
             moveAxis[0] = moveAxis[1] = moveAxis[2] = 0.;
@@ -165,8 +176,8 @@ class Character {
         vec3.add(localVelocity, localVelocity, frictionVector);
         if (this.onGround && vec2.length(new vec2.fromValues(localVelocity[0],localVelocity[1]))>=0.01){
             //this.playRandom("run");
-        } 
- 
+        }
+
         //if (!this.onGround)
         //    moveAxis[0] = 0.;
 
@@ -176,7 +187,7 @@ class Character {
         let scaledVelocity = vec3.scale(vec3.create(), this.velocity, timeScale);
         this.transform1.translate(scaledVelocity);
         this.handleWorldCollision(state);
-   }
+    }
 
     handleWorldCollision(state){
         this.columnCollision(state);
@@ -213,8 +224,8 @@ class Character {
         vec3.add(distance, position, snake.gameObject.transform.globalPosition);
         let timeSinceDamage = state.time - this.damageTime;
         if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
-            console.log("OWW, YA GOT ME");
             this.health -= 0.334;
+            this.playRandom("damage");
             this.damageTime = state.time;
             if (this.health < 0.) {
                 this.health = 0.;
@@ -224,10 +235,15 @@ class Character {
         }
         snake = snake.tail;
         while (snake){
-            vec3.add(distance,position, snake.gameObject.transform.globalPosition);
-            if (vec3.length(distance)<10){
-                console.log("YOURE TOUCHING THE SNAKES BUTT");
-                this.playRandom("damage");
+            let timeSinceDamage = state.time - snake.damageTime;
+
+            if (timeSinceDamage > 0.1 && state.inputHandler.isKeyHeld("MouseLeft")) {
+                let hitPos = vec3.add(vec3.create(), this.transform.globalPosition, this.transform.forward);
+                let hitDist = vec3.distance(hitPos, snake.transform.globalPosition);
+                if (hitDist < 10) {
+                    snake.damageTime = state.time;
+                    snake.health -= 0.5;
+                }
 
             }
             snake=snake.tail;

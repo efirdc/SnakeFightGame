@@ -19,7 +19,9 @@ class Snake {
                 .translate(head.gameObject.transform.localPosition)
                 .translate(randomOffset);
             this.gameObject = new GameObject(newTransform, bodyMesh, bodyMaterial, shader);
-            this.gameObject.material.diffuse = vec3.copy(vec3.create(), this.gameObject.material.diffuse)
+            this.baseColor = vec3.copy(vec3.create(), bodyMaterial.albedo);
+            this.damagedColor = [1.0,0.1,0.1];
+            this.gameObject.material.albedo = vec3.copy(vec3.create(), bodyMaterial.albedo);
         }
         this.transform = this.gameObject.transform;
 
@@ -27,6 +29,8 @@ class Snake {
         if (numChildren > 0)
             this.tail = new Snake(this, numChildren - 1, distance,
                 headMesh, headMaterial, bodyMesh, bodyMaterial, shader);
+        this.health = 1.;
+        this.damageTime = 0;
     }
 
     get isHead() {
@@ -62,7 +66,7 @@ class Snake {
             let deltaTarget = vec3.sub(vec3.create(), targetPos, currPos);
             vec3.normalize(deltaTarget, deltaTarget);
             let localDeltaTarget = this.transform.inverseTransformDirection(deltaTarget);
-            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.015);
+            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.0125);
             let finalVelocity = vec3.scale(vec3.create(), this.transform.forward, 2 * timeScale);
             this.gameObject.transform.translate(finalVelocity);
 
@@ -83,7 +87,6 @@ class Snake {
                 let proj = Math.clamp(vec3.dot(coneDir, this.headDir), -1. + 1e-5, 1. - 1e-5);
                 let coneAngle = Math.acos(proj);
 
-                this.gameObject.material.diffuse[2] = 0.;
                 if (coneAngle > maxConeAngle || coneAngle < minConeAngle) {
                     let rotAngle = 0.;
                     if (coneAngle > maxConeAngle)
@@ -93,13 +96,12 @@ class Snake {
                     let rotAxis = vec3.cross(vec3.create(), coneDir, this.headDir);
                     let rotMatrix = mat4.fromRotation(mat4.create(), -rotAngle * 0.1, rotAxis);
                     vec3.transformMat4(this.headDir, this.headDir, rotMatrix);
-                    this.gameObject.material.diffuse[2] = 1.;
                 }
             }
 
             let newPos = vec3.scaleAndAdd(vec3.create(), headPos, this.headDir, this.distance);
             this.gameObject.transform.localPosition = newPos;
-
+            vec3.lerp(this.gameObject.material.albedo, this.damagedColor, this.baseColor, this.health);
         }
         if (!this.isTail) {
             this.tail.update(state, deltaTime, headVelocity);
@@ -107,8 +109,6 @@ class Snake {
             if (!this.isHead) {
                 let pointyness = (-vec3.dot(this.headDir, this.tail.headDir) + 1.) * 0.5;
                 let flatness = 1 - pointyness;
-                this.gameObject.material.diffuse[0] = pointyness;
-                this.gameObject.material.diffuse[1] = flatness;
             }
 
             let tangent = vec3.add(vec3.create(), this.headDir, this.tail.headDir);
