@@ -17,13 +17,14 @@ class Character {
         let aMesh = new Mesh(gl, "models/Spartan_Sword.obj", meshMat);
         this.model = new GameObject(new Transform(), aMesh, assets.materials.white, shader);
         this.weaponTransform = this.model.transform;
-        this.weaponTransform.rotate([0, 1, 0], Math.PI * 0.4);
 
         this.swingTransform = new Transform();
         this.swingTransform.setParent(this.transform1);
         this.weaponTransform.setParent(this.swingTransform);
-        this.weaponTransform.translate([0, 0, -1.5]);
-        this.swingTransform.rotate([0, 1., 0], Math.PI * 0.4);
+        this.weaponTransform.rotate([0, 0, 1], Math.PI);
+        //this.weaponTransform.translate([0, 0, -1.5]);
+
+        this.swingTransform.rotate([0, 1., 0], -Math.PI * 0.1);
 
         this.onGround = false;
         this.dead = false;

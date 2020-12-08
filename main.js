@@ -35,7 +35,7 @@ function main() {
     let outerSphere = new Mesh(gl,"models/sphere6.obj",
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.beige, shader);
-    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.white, shader);
+    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.beige, shader);
 
     for (i = 0; i < state.noc; i++) {
         let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
@@ -90,7 +90,7 @@ function drawScene(gl, deltaTime, state) {
         state.lColor[3*i]=1.0//Math.sin(now/10);//red values
         state.lColor[1+3*i]=1.0//Math.cos(now/10);//-i/3;//green values
         state.lColor[2+3*i]=1.0//i/3;//blue values
-        state.lStrength[i]=1.0;//strength values
+        state.lStrength[i]=0.0;//strength values
     }
 
 
@@ -101,7 +101,7 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol]=1.0;
     state.lColor[1+3*state.nol]=1.0;
     state.lColor[2+3*state.nol]=1.0;
-    state.lStrength[state.nol]=0.75;
+    state.lStrength[state.nol]=0.5;
 
 
     //we can have a light on the snakes head! :D
@@ -111,7 +111,7 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol+3]=1.0;
     state.lColor[4+3*state.nol]=0.0;
     state.lColor[5+3*state.nol]=0.0;
-    state.lStrength[state.nol+1]=1.5;
+    state.lStrength[state.nol+1]=1.0;
 
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
@@ -218,12 +218,13 @@ function transformShader(gl) {
             outColor += (aTerm + sTerm + dTerm)*attenuation;
         }
         float grey=(outColor.r+outColor.g+outColor.b)/3.0;
-        outColor = mix(vec3(grey), outColor, health);
+        //outColor = mix(vec3(grey), outColor, health);
         
         float timeSinceDamage = coolTime - damageTime;
         if (timeSinceDamage < 4.)
             outColor = mix(outColor, vec3(1., 0., 0.), exp(-2.*timeSinceDamage) * 0.9);
         
+        outColor = pow(outColor, vec3(1. / 2.2));
         return outColor;
     }
 
