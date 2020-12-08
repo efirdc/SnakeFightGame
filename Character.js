@@ -61,7 +61,7 @@ class Character {
         let deltaMouse = inputHandler.deltaMouse;
 
         let timeSinceAttack = state.time - this.attackTime;
-        if (inputHandler.leftMouseClicked() && timeSinceAttack > 1. && !this.dead) {
+        if (inputHandler.isKeyHeld("LeftMouse") && timeSinceAttack > 1. && !this.dead) {
             this.attackDir = vec2.fromValues(normalRandom(), normalRandom());
             this.attackTime = state.time;
             console.log(this.attackTime, this.attackDir);
@@ -174,7 +174,6 @@ class Character {
         vec3.add(distance, position, snake.gameObject.transform.globalPosition);
         let timeSinceDamage = state.time - this.damageTime;
         if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
-            console.log("OWW, YA GOT ME");
             this.health -= 0.334;
             this.damageTime = state.time;
             if (this.health < 0.) {
@@ -185,10 +184,18 @@ class Character {
         }
         snake = snake.tail;
         while (snake){
-            vec3.add(distance,position, snake.gameObject.transform.globalPosition);
-            if (vec3.length(distance)<10){
-                console.log("YOURE TOUCHING THE SNAKES BUTT");
+            let timeSinceDamage = state.time - snake.damageTime;
+
+            if (timeSinceDamage > 0.1 && state.inputHandler.isKeyHeld("MouseLeft")) {
+                let hitPos = vec3.add(vec3.create(), this.transform.globalPosition, this.transform.forward);
+                let hitDist = vec3.distance(hitPos, snake.transform.globalPosition);
+                if (hitDist < 10) {
+                    snake.damageTime = state.time;
+                    snake.health -= 0.5;
+                }
+
             }
+
             snake=snake.tail;
         }
     }

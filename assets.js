@@ -16,11 +16,12 @@ const assets = {
     },
     },
     materials: {
-        purple: {albedo: [1,0.0,1], metallic: 0.5, roughness: 0.5},
+        body: {albedo: [0.1,1.0,0.1], metallic: 0.8, roughness: 0.6},
         red: {albedo: [1,0.0,0.0], metallic: 0.8, roughness: 0.3},
         green: {albedo: [0.0,1,0.0], metallic: 0.2, roughness: 0.7},
-        white: {albedo: [0.9,0.9,0.9], metallic: 0.3, roughness: 0.2},
-        black: {albedo: [0.1,0.1,0.1], metallic: 0.9, roughness: 0.3},
+        white: {albedo: [1.0,1.0,1.0], metallic: 0.3, roughness: 0.2},
+        ground: {albedo: [1,1,1], metallic: 0.1, roughness: 0.05},
+        celing: {albedo: [0,0,0], metallic: 0.8, roughness: 0.2},
         beige:{albedo: [105/255,75/255,0/255], metallic: 0.2, roughness: 0.8},
     }
 };

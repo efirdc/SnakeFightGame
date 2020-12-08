@@ -19,6 +19,9 @@ class Snake {
                 .translate(head.gameObject.transform.localPosition)
                 .translate(randomOffset);
             this.gameObject = new GameObject(newTransform, bodyMesh, bodyMaterial, shader);
+            this.baseColor = vec3.copy(vec3.create(), bodyMaterial.albedo);
+            this.damagedColor = [1.0,0.1,0.1];
+            this.gameObject.material.albedo = vec3.copy(vec3.create(), bodyMaterial.albedo);
         }
         this.transform = this.gameObject.transform;
 
@@ -26,6 +29,8 @@ class Snake {
         if (numChildren > 0)
             this.tail = new Snake(this, numChildren - 1, distance,
                 headMesh, headMaterial, bodyMesh, bodyMaterial, shader);
+        this.health = 1.;
+        this.damageTime = 0;
     }
 
     get isHead() {
@@ -96,6 +101,7 @@ class Snake {
 
             let newPos = vec3.scaleAndAdd(vec3.create(), headPos, this.headDir, this.distance);
             this.gameObject.transform.localPosition = newPos;
+            vec3.lerp(this.gameObject.material.albedo, this.damagedColor, this.baseColor, this.health);
         }
         if (!this.isTail) {
             this.tail.update(state, deltaTime, headVelocity);

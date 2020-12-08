@@ -31,12 +31,12 @@ function main() {
 //    let shader = transformShader(gl);
 
     let cubeMesh = new Mesh(gl, "models/cube.obj");
-    let sphereMesh = new Mesh(gl,"models/sphere6.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
+    let sphereMesh = new Mesh(gl,"models/sphere6S.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
     let outerSphere = new Mesh(gl,"models/sphere6.obj",
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
-    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.black, shader);
-    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.black, shader);
+    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.ground, shader);
+    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.celing, shader);
 
     const gr = (Math.sqrt(5.0) + 1.0) / 2.0;
     const ga = (2.0 - gr) * 2.0 * Math.PI;
@@ -51,19 +51,19 @@ function main() {
         t1.localPosition = pos;
         t1.rotateTowards([0, 1, 0], dir);
         let material = {
-            albedo:[Math.random(), Math.random(), Math.random()],
-            metallic: Math.random(), roughness: Math.random(),
+            albedo:hsv2rgb(randRange(0, 260), randRange(0.8, 1.0), randRange(0.8, 1.0)),
+            metallic: randRange(0.2, 0.6), roughness: randRange(0.2, 0.6),
         }
         let cylinder = new GameObject(t1, cylinderMesh, material, shader);
     }
 
-    let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
+    let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [8, 8, 8]));
     let bodyMat = mat4.create();
-    mat4.scale(bodyMat, bodyMat, [3., 3., 8]);
+    mat4.scale(bodyMat, bodyMat, [5., 5., 9]);
     mat4.rotate(bodyMat, bodyMat, Math.PI / 4., [1, 1, 0.]);
     let bodyMesh = new Mesh(gl, "models/smoothCube.obj", bodyMat);
     state["snake"] = new Snake(undefined, 200, 6.,
-        headMesh, assets.materials.red, bodyMesh, assets.materials.purple, shader);
+        headMesh, assets.materials.red, bodyMesh, assets.materials.body, shader);
     
     let then = 0.0;
     function render(now) {
@@ -99,7 +99,7 @@ function drawScene(gl, deltaTime, state) {
         state.lColor[3*i]=1.0//Math.sin(now/10);//red values
         state.lColor[1+3*i]=1.0//Math.cos(now/10);//-i/3;//green values
         state.lColor[2+3*i]=1.0//i/3;//blue values
-        state.lStrength[i]=0.5;//strength values
+        state.lStrength[i]=1.0;//strength values
     }
 
 
@@ -110,7 +110,7 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol]=1.0;
     state.lColor[1+3*state.nol]=1.0;
     state.lColor[2+3*state.nol]=1.0;
-    state.lStrength[state.nol]=0.5;
+    state.lStrength[state.nol]=1.0;
 
 
     //we can have a light on the snakes head! :D
@@ -120,7 +120,7 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol+3]=1.0;
     state.lColor[4+3*state.nol]=0.0;
     state.lColor[5+3*state.nol]=0.0;
-    state.lStrength[state.nol+1]=1.0;
+    state.lStrength[state.nol+1]=10.0;
 
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
@@ -277,10 +277,9 @@ function transformShader(gl) {
         
         float grey=(outColor.r+outColor.g+outColor.b)/3.0;
         float dist = length(screenCoord);
-        float healthClamp = min(1., health * 2.);
-        outColor=mix(vec3(grey),outColor,healthClamp);
+        //outColor=mix(vec3(grey),outColor,health);
         
-        outColor=mix(outColor,vec3(0.1,0.0,0.0),smoothstep(0.2, 1.3, dist) * (1. - healthClamp));
+        outColor=mix(outColor,vec3(0.1,0.0,0.0),smoothstep(0.2, 1.3, dist) * (1. - health));
         
         float timeSinceDamage = coolTime - damageTime;
         if (timeSinceDamage < 4.)
@@ -290,7 +289,7 @@ function transformShader(gl) {
         if (timeSinceAttack < 1.) {
             
         }
-        outColor = outColor / (outColor + 1.);
+        //outColor = outColor / (outColor + 1.);
         outColor = pow(outColor, vec3(1. / 2.2));
         return outColor;
     }
