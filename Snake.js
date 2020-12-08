@@ -62,7 +62,7 @@ class Snake {
             let deltaTarget = vec3.sub(vec3.create(), targetPos, currPos);
             vec3.normalize(deltaTarget, deltaTarget);
             let localDeltaTarget = this.transform.inverseTransformDirection(deltaTarget);
-            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.0125);
+            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.015);
             let finalVelocity = vec3.scale(vec3.create(), this.transform.forward, 2 * timeScale);
             this.gameObject.transform.translate(finalVelocity);
 

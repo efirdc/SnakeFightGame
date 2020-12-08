@@ -10,18 +10,27 @@ class Character {
         this.velocity = vec3.create();
 
         let meshMat = mat4.create();
+        mat4.translate(meshMat, meshMat, [0, 0, -1.5]);
         mat4.rotate(meshMat, meshMat, Math.PI * 0.5, [0, 1, 0]);
         mat4.rotate(meshMat, meshMat, Math.PI, [0, 0, 1]);
-        //mat4.scale(meshMat, meshMat, [0.5, 0.5, 0.,5]);
-        mat4.translate(meshMat, meshMat, [-5, -1, 0]);
+        mat4.scale(meshMat, meshMat, [0.5, 0.5, 0.5]);
         let aMesh = new Mesh(gl, "models/Spartan_Sword.obj", meshMat);
-        this.model = new GameObject(new Transform(), aMesh,assets.materials.white, shader);
-        //this.model.transform.rotate([0,0,1], Math.PI/2);
-        //this.model.transform.rotate([0,1,0], -Math.PI/1.5);
-        //this.model.transform.scaleBy([0.1,0.1,0.1]);
-        this.model.transform.setParent(this.transform1);
+        this.model = new GameObject(new Transform(), aMesh, assets.materials.white, shader);
+        this.weaponTransform = this.model.transform;
+        this.weaponTransform.rotate([0, 1, 0], Math.PI * 0.4);
+
+        this.swingTransform = new Transform();
+        this.swingTransform.setParent(this.transform1);
+        this.weaponTransform.setParent(this.swingTransform);
+        this.weaponTransform.translate([0, 0, -1.5]);
+        this.swingTransform.rotate([0, 1., 0], Math.PI * 0.4);
 
         this.onGround = false;
+        this.dead = false;
+        this.deadSideDirection = undefined;
+
+        this.health = 1.;
+        this.damageTime = 0.;
     }
 
     get transform() {
@@ -30,6 +39,7 @@ class Character {
 
     update(state, deltaTime) {
         let timeScale = Math.min(deltaTime, 1 / 20) * 60;
+        const height = 3;
         const acceleration = 0.1;
         const groundedFrictionCoeff = -0.5;
         const aerialFrictionCoeff = -0.075;
@@ -47,12 +57,21 @@ class Character {
         vec3.normalize(moveAxis, moveAxis);
         let deltaMouse = inputHandler.deltaMouse;
 
+        if (this.dead) {
+            moveAxis[0] = moveAxis[1] = moveAxis[2] = 0.;
+            deltaMouse[0] = deltaMouse[1] = 0.;
+        }
+
         let upDirection = vec3.normalize(vec3.create(), this.transform1.globalPosition);
+
         vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, gravity * timeScale);
 
-        let rotAxis = vec3.cross(vec3.create(), upDirection, this.transform1.up);
-        let angleDifference = Math.acos(Math.clamp(vec3.dot(upDirection, this.transform1.up), -1., 1.));
-        this.transform1.rotate(rotAxis, -angleDifference, Space.WORLD);
+        if (!this.dead)
+            this.transform1.rotateTowards([0, 1, 0], upDirection, 1., Space.LOCAL, Space.WORLD);
+        else {
+            this.transform1.rotateTowards([0, 1, 0], this.deadSideDirection,
+                0.01, Space.LOCAL, Space.WORLD);
+        }
 
         // Left/right look
         this.transform1.rotate(upDirection, deltaMouse[0] * Math.PI * -0.001, Space.WORLD);
@@ -70,15 +89,15 @@ class Character {
         }
         let localVelocity = this.transform1.inverseTransformVector(this.velocity);
 
-        if (vec3.length(this.transform1.globalPosition) < state.ground+1) {
+        if (vec3.length(this.transform1.globalPosition) < state.ground+height) {
             this.onGround = true;
             localVelocity[1] = 0.;
             let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
-            vec3.scale(newPosition, newPosition, state.ground+1);
+            vec3.scale(newPosition, newPosition, state.ground+height);
             this.transform1.localPosition = newPosition;
         }
 
-        if (inputHandler.isKeyHeld("Space") && this.onGround) {
+        if (inputHandler.isKeyHeld("Space") && this.onGround && !this.dead) {
             this.onGround = false;
             localVelocity[1] += jumpPower;
             localVelocity[2] *= jumpBoost;
@@ -142,8 +161,16 @@ class Character {
         let distance = vec3.create();
         vec3.negate(position,position);
         vec3.add(distance, position, snake.gameObject.transform.globalPosition);
-        if (vec3.length(distance)<10){
+        let timeSinceDamage = state.time - this.damageTime;
+        if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
             console.log("OWW, YA GOT ME");
+            this.health -= 0.334;
+            this.damageTime = state.time;
+            if (this.health < 0.) {
+                this.health = 0.;
+                this.dead = true;
+                this.deadSideDirection = this.transform1.right;
+            }
         }
         snake = snake.tail;
         while (snake){

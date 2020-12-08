@@ -156,24 +156,24 @@ class Transform {
         return this;
     }
 
-    rotateTowards(fromAxis, toAxis, percent=1., space=Space.LOCAL) {
+    rotateTowards(fromAxis, toAxis, percent=1., fromAxisSpace=Space.LOCAL, toAxisSpace=Space.LOCAL) {
         this._hasChanged = true;
-        if (space === Space.WORLD) {
+        if (fromAxisSpace === Space.WORLD)
             fromAxis = this.inverseTransformDirection(fromAxis);
+        if (toAxisSpace === Space.WORLD)
             toAxis = this.inverseTransformDirection(toAxis);
-        }
         let cosineAngle = Math.clamp(vec3.dot(toAxis, fromAxis), -1., 1.);
         let angleDifference = Math.acos(cosineAngle);
         let rotAxis = vec3.cross(vec3.create(), toAxis, fromAxis);
-        this.rotate(rotAxis, -angleDifference * percent, space);
+        this.rotate(rotAxis, -angleDifference * percent);
     }
 
-    rotateTowards2(fromAxis, toAxis, rad, space=Space.LOCAL) {
+    rotateTowards2(fromAxis, toAxis, rad, fromAxisSpace=Space.LOCAL, toAxisSpace=Space.LOCAL) {
         this._hasChanged = true;
-        if (space === Space.WORLD) {
+        if (fromAxisSpace === Space.WORLD)
             fromAxis = this.inverseTransformDirection(fromAxis);
+        if (toAxisSpace === Space.WORLD)
             toAxis = this.inverseTransformDirection(toAxis);
-        }
         let cosineAngle = Math.clamp(vec3.dot(toAxis, fromAxis), -1., 1.);
         let angleDifference = Math.acos(cosineAngle);
         let rotAxis = vec3.cross(vec3.create(), toAxis, fromAxis);
