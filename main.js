@@ -23,7 +23,7 @@ function main() {
         noc: 10,
         ground: g,
         ceiling: 650,
-        health: 1.0,
+        time: 0.,
         size: new vec2.fromValues(canvas.width, canvas.height),
     };
 
@@ -31,7 +31,7 @@ function main() {
 //    let shader = transformShader(gl);
 
     let cubeMesh = new Mesh(gl, "models/cube.obj");
-    let sphereMesh = new Mesh(gl,"models/sphere6S.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
+    let sphereMesh = new Mesh(gl,"models/sphere6.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
     let outerSphere = new Mesh(gl,"models/sphere6.obj",
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
@@ -69,6 +69,7 @@ function main() {
 }
 
 function drawScene(gl, deltaTime, state) {
+    state.time += deltaTime;
     gl.clearColor(0.2, 0.2, 0.2, 1.0);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
@@ -82,7 +83,7 @@ function drawScene(gl, deltaTime, state) {
     state.snake.update(state, deltaTime);
 
     for (var i=0;i<state.nol;i++){
-        let now = Date.now()/1000;
+        let now = state.time;
         let lHeight = (state.ceiling-state.ground)/2+state.ground;
         state.lights[3*i] = (lHeight)*Math.cos(now+2*i*Math.PI/state.nol);//x values
         state.lights[1+3*i] = (lHeight)*Math.cos(i*Math.PI);
@@ -101,7 +102,7 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol]=1.0;
     state.lColor[1+3*state.nol]=1.0;
     state.lColor[2+3*state.nol]=1.0;
-    state.lStrength[state.nol]=0.75;
+    state.lStrength[state.nol]=0.5;
 
 
     //we can have a light on the snakes head! :D
@@ -111,7 +112,8 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[3*state.nol+3]=1.0;
     state.lColor[4+3*state.nol]=0.0;
     state.lColor[5+3*state.nol]=0.0;
-    state.lStrength[state.nol+1]=1.5;
+    state.lStrength[state.nol+1]=1.0;
+
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
     mat4.perspective(projectionMatrix, 60.0 * Math.PI / 180.0, aspect, 0.1, 10000.);
@@ -135,8 +137,11 @@ function drawScene(gl, deltaTime, state) {
         gl.uniform3fv(object.shader.uniformLocations.lColor, state.lColor);
         gl.uniform1fv(object.shader.uniformLocations.lStrength, state.lStrength);
         gl.uniform1i(object.shader.uniformLocations.nLights, state.nol+2);//+1 for the character light
-        gl.uniform1f(object.shader.uniformLocations.health, state.health);
+        gl.uniform1f(object.shader.uniformLocations.health, state.character.health);
+        gl.uniform1f(object.shader.uniformLocations.damageTime, state.character.damageTime);
+        gl.uniform1f(object.shader.uniformLocations.coolTime, state.time);
         gl.uniform2fv(object.shader.uniformLocations.size, state.size);
+
         gl.bindVertexArray(object.mesh.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, object.mesh.numVertices);
     });
@@ -173,6 +178,9 @@ function transformShader(gl) {
     out vec4 fragColor;
     in vec3 oN;
     in vec4 fragPos;
+    
+    uniform float coolTime;
+    uniform float damageTime;
     
     uniform vec3 diffuse;
     uniform vec3 ambient;
@@ -212,13 +220,19 @@ function transformShader(gl) {
             outColor += (aTerm + sTerm + dTerm)*attenuation;
         }
         vec2 screenCoord=(gl_FragCoord.xy/size)*2. -1.;
-        /*float health1=0.3;*/
-        float dist=length(screenCoord);
-        float shade=pow(health,2.);
-        float border=0.3*dist*dist*(1.-health); 
+        
         float grey=(outColor.r+outColor.g+outColor.b)/3.0;
+        float dist = length(screenCoord);
+        float shade = pow(health,2.);
+        float border=0.3*dist*dist*(1.-health); 
         outColor=mix(vec3(grey),outColor,shade);
         outColor=mix(outColor,vec3(0.7,0.0,0.0),border);
+        
+        float timeSinceDamage = coolTime - damageTime;
+        if (timeSinceDamage < 4.)
+            outColor = mix(outColor, vec3(1., 0., 0.), exp(-2.*timeSinceDamage) * 0.9);
+        
+        outColor = pow(outColor, vec3(1. / 2.2));
         return outColor;
     }
 
@@ -249,6 +263,8 @@ function transformShader(gl) {
             "nLights": gl.getUniformLocation(id, "nLights"),
             "lStrength": gl.getUniformLocation(id, "lStrength"),
             "health": gl.getUniformLocation(id, "health"),
+            "coolTime": gl.getUniformLocation(id, "coolTime"),
+            "damageTime": gl.getUniformLocation(id, "damageTime"),
             "size": gl.getUniformLocation(id, "size"),
         },
     };
