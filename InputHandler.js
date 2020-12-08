@@ -23,6 +23,8 @@ class InputHandler {
         this.canvas.addEventListener("mousedown", this._handleMouseDown);
         this.canvas.addEventListener("mousemove", this._handleMouseMove);
         document.addEventListener("pointerlockchange", this._handlePointerLockChange)
+
+        this.leftMousePressed = false;
     }
 
     _handlePointerLockChange(event) {
@@ -41,6 +43,9 @@ class InputHandler {
         event.preventDefault();
         this.canvas.requestPointerLock();
         this.canvas.requestFullscreen();
+
+        if (event.button === 0)
+            this.leftMousePressed = true;
     }
 
     _handleKeyDown(event) {
@@ -113,5 +118,11 @@ class InputHandler {
         if (keyState === undefined)
             return false;
         return !keyState.held && keyState.frame === this.frame;
+    }
+
+    leftMouseClicked() {
+        let clicked = this.leftMousePressed;
+        this.leftMousePressed = false;
+        return clicked;
     }
 }

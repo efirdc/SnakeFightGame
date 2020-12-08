@@ -143,6 +143,15 @@ class Transform {
         this._scale = vec3.fromValues(newValue[0], newValue[1], newValue[2]);
     }
 
+    setEuler(xDegrees, yDegrees, zDegrees) {
+        this._hasChanged = true;
+        mat4.identity(this._rotation);
+        mat4.rotateX(this._rotation, this._rotation, xDegrees / 180. * Math.PI);
+        mat4.rotateY(this._rotation, this._rotation, yDegrees / 180. * Math.PI);
+        mat4.rotateZ(this._rotation, this._rotation, zDegrees / 180. * Math.PI);
+        return this;
+    }
+
     translate(x) {
         this._hasChanged = true;
         vec3.add(this._position, this._position, x);

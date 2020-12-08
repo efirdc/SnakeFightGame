@@ -9,22 +9,22 @@ class Character {
 
         this.velocity = vec3.create();
 
-        let meshMat = mat4.create();
+        //let meshMat = mat4.create();
         //mat4.translate(meshMat, meshMat, [0, 0, 0]);
         //mat4.rotate(meshMat, meshMat, Math.PI * 0.5, [0, 1, 0]);
         //mat4.rotate(meshMat, meshMat, Math.PI, [0, 0, 1]);
-        mat4.scale(meshMat, meshMat, [0.5, 0.5, 0.5]);
-        let aMesh = new Mesh(gl, "models/swordf.obj", meshMat);
-        this.model = new GameObject(new Transform(), aMesh, assets.materials.white, shader);
-        this.weaponTransform = this.model.transform;
+        //mat4.scale(meshMat, meshMat, [0.5, 0.5, 0.5]);
+        //let aMesh = new Mesh(gl, "models/swordf.obj", meshMat);
+        //this.model = new GameObject(new Transform(), aMesh, assets.materials.white, shader);
+        //this.weaponTransform = this.model.transform;
 
-        this.swingTransform = new Transform();
-        this.swingTransform.setParent(this.transform1);
-        this.weaponTransform.setParent(this.swingTransform);
-        this.weaponTransform.rotate([1, 0, 0], Math.PI * 0.5);
-        this.weaponTransform.translate([-2, 0, -1.5]);
+        //this.swingTransform = new Transform();
+        //this.swingTransform.setParent(this.transform2);
+        //this.weaponTransform.setParent(this.swingTransform);
+        //this.weaponTransform.setEuler(75, 5, -35);
+        //this.weaponTransform.translate([0, -1.2, -1.9]);
 
-        //this.swingTransform.rotate([0, 1., 0], -Math.PI * 0.1);
+        //this.swingTransform.setEuler(0, -35, 0.);
 
         this.onGround = false;
         this.dead = false;
@@ -32,6 +32,8 @@ class Character {
 
         this.health = 1.;
         this.damageTime = 0.;
+        this.attackTime = 0.;
+        this.attackDir = vec2.fromValues(0., 0.);
     }
 
     get transform() {
@@ -57,6 +59,14 @@ class Character {
         );
         vec3.normalize(moveAxis, moveAxis);
         let deltaMouse = inputHandler.deltaMouse;
+
+        let timeSinceAttack = state.time - this.attackTime;
+        if (inputHandler.leftMouseClicked() && timeSinceAttack > 1. && !this.dead) {
+            this.attackDir = vec2.fromValues(normalRandom(), normalRandom());
+            this.attackTime = state.time;
+            console.log(this.attackTime, this.attackDir);
+        }
+
 
         if (this.dead) {
             moveAxis[0] = moveAxis[1] = moveAxis[2] = 0.;

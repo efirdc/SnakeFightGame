@@ -20,7 +20,7 @@ function main() {
         lStrength: new Float32Array(42),
         nol: 6,
         columns: new Float32Array(30 * 3),
-        noc: 10,
+        noc: 40,
         ground: g,
         ceiling: 650,
         time: 0.,
@@ -35,18 +35,26 @@ function main() {
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
     let outerSphere = new Mesh(gl,"models/sphere6.obj",
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
-    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.green, shader);
-    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.purple, shader);
+    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.black, shader);
+    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.black, shader);
 
+    const gr = (Math.sqrt(5.0) + 1.0) / 2.0;
+    const ga = (2.0 - gr) * 2.0 * Math.PI;
     for (i = 0; i < state.noc; i++) {
-        let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
+        let lat = Math.asin(-1. + 2. * i / (state.noc + 1));
+        let lon = ga * i;
+        let dir = vec3.fromValues(Math.cos(lon)*Math.cos(lat), Math.sin(lon)*Math.cos(lat), Math.sin(lat));
         vec3.normalize(dir, dir);
         state.columns[3*i]=dir[0];state.columns[3*i+1]=dir[1];state.columns[3*i+2]=dir[2];
         let pos = vec3.scale(vec3.create(), dir, (state.ground + state.ceiling) * 0.5);
         let t1 = new Transform();
         t1.localPosition = pos;
         t1.rotateTowards([0, 1, 0], dir);
-        let cylinder = new GameObject(t1, cylinderMesh, assets.materials.beige, shader);
+        let material = {
+            albedo:[Math.random(), Math.random(), Math.random()],
+            metallic: Math.random(), roughness: Math.random(),
+        }
+        let cylinder = new GameObject(t1, cylinderMesh, material, shader);
     }
 
     let headMesh = new Mesh(gl, "models/cube.obj", mat4.fromScaling(mat4.create(), [4, 4, 4]));
@@ -91,7 +99,7 @@ function drawScene(gl, deltaTime, state) {
         state.lColor[3*i]=1.0//Math.sin(now/10);//red values
         state.lColor[1+3*i]=1.0//Math.cos(now/10);//-i/3;//green values
         state.lColor[2+3*i]=1.0//i/3;//blue values
-        state.lStrength[i]=1.0;//strength values
+        state.lStrength[i]=0.5;//strength values
     }
 
 
@@ -128,11 +136,10 @@ function drawScene(gl, deltaTime, state) {
         gl.uniformMatrix4fv(object.shader.uniformLocations.uViewMatrix, false, m1);
         gl.uniformMatrix4fv(object.shader.uniformLocations.uModelMatrix, false, m2);
         gl.uniformMatrix4fv(object.shader.uniformLocations.uNormalMatrix, false, m3);
-        gl.uniform3fv(object.shader.uniformLocations.diffuse, object.material.diffuse);
-        gl.uniform3fv(object.shader.uniformLocations.ambient, object.material.ambient);
-        gl.uniform3fv(object.shader.uniformLocations.specular, object.material.specular);
+        gl.uniform3fv(object.shader.uniformLocations.albedo, object.material.albedo);
+        gl.uniform1f(object.shader.uniformLocations.metallic, object.material.metallic);
+        gl.uniform1f(object.shader.uniformLocations.roughness, object.material.roughness);
         gl.uniform3fv(object.shader.uniformLocations.camPos, state.character.transform1.globalPosition);
-        gl.uniform1f(object.shader.uniformLocations.nCoeff, object.material.n);
         gl.uniform3fv(object.shader.uniformLocations.lightPos, state.lights);
         gl.uniform3fv(object.shader.uniformLocations.lColor, state.lColor);
         gl.uniform1fv(object.shader.uniformLocations.lStrength, state.lStrength);
@@ -141,6 +148,8 @@ function drawScene(gl, deltaTime, state) {
         gl.uniform1f(object.shader.uniformLocations.damageTime, state.character.damageTime);
         gl.uniform1f(object.shader.uniformLocations.coolTime, state.time);
         gl.uniform2fv(object.shader.uniformLocations.size, state.size);
+        gl.uniform2fv(object.shader.uniformLocations.attackDir, state.character.attackDir);
+        gl.uniform1f(object.shader.uniformLocations.attackTime, state.character.attackTime);
 
         gl.bindVertexArray(object.mesh.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, object.mesh.numVertices);
@@ -181,11 +190,12 @@ function transformShader(gl) {
     
     uniform float coolTime;
     uniform float damageTime;
+    uniform float attackTime;
+    uniform vec2 attackDir;
     
-    uniform vec3 diffuse;
-    uniform vec3 ambient;
-    uniform vec3 specular;
-    uniform float nCoeff;
+    uniform vec3 albedo;
+    uniform float metallic;
+    uniform float roughness;
     uniform float health;
     uniform vec2 size;
     uniform vec3 camPos;
@@ -193,45 +203,94 @@ function transformShader(gl) {
     uniform vec3[42] lightPos;
     uniform vec3[42] lColor;
     uniform float[42] lStrength;
+    #define kPi 3.14159265
+    
+    vec3 fresnelSchlick(float cosTheta, vec3 F0)
+    {
+        return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+    }  
+    float DistributionGGX(vec3 N, vec3 H, float rough)
+    {
+        float a      = rough*rough;
+        float a2     = a*a;
+        float NdotH  = max(dot(N, H), 0.0);
+        float NdotH2 = NdotH*NdotH;
+        
+        float num   = a2;
+        float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+        denom = kPi * denom * denom;
+        
+        return num / denom;
+    }
+    
+    float GeometrySchlickGGX(float NdotV, float rough)
+    {
+        float r = (rough + 1.0);
+        float k = (r*r) / 8.0;
+    
+        float num   = NdotV;
+        float denom = NdotV * (1.0 - k) + k;
+        
+        return num / denom;
+    }
+    float GeometrySmith(vec3 N, vec3 V, vec3 L, float rough)
+    {
+        float NdotV = max(dot(N, V), 0.0);
+        float NdotL = max(dot(N, L), 0.0);
+        float ggx2  = GeometrySchlickGGX(NdotV, rough);
+        float ggx1  = GeometrySchlickGGX(NdotL, rough);
+        
+        return ggx1 * ggx2;
+    }
 
     vec3 combineLights(){
         vec3 N = normalize(oN);
         vec3 outColor = vec3(0);
         for (int i=0;i<nLights;i++) { 
-            
-            //ambient term
-            vec3 aTerm = ambient*lColor[i]*lStrength[i];
-            
-            //diffuse term
-            vec3 L = lightPos[i] - fragPos.xyz;
-            float d = length(L);
-            //float attenuation = 1. / (1. + 0.007 * d + 0.0002 * d * d);
-            float attenuation = 1. / exp( 0.005 * d);
-            L = normalize(L);
-            float N_dot_L = max(dot(N, L), 0.0);
-            vec3 dTerm = diffuse * N_dot_L * lColor[i] * lStrength[i];
-            
-            //specular term
-            vec3 H = L + normalize(camPos-fragPos.xyz);
-            H = normalize(H);
-            float spec = pow(max(dot(H,N),0.0),nCoeff);
-            vec3 sTerm = spec*specular*lColor[i] * min(lStrength[i], 1.0);
-            
-            outColor += (aTerm + sTerm + dTerm)*attenuation;
+            vec3 F0 = vec3(0.04);
+            F0 = mix(F0, albedo, metallic);
+        
+            vec3 radiance = lColor[i] * lStrength[i];
+        
+            vec3 L = normalize(lightPos[i] - fragPos.xyz);
+            vec3 V = normalize(camPos-fragPos.xyz);
+            vec3 H = normalize(L + V);
+        
+            // cook-torrance brdf
+            float NDF = DistributionGGX(N, H, roughness);
+            float G   = GeometrySmith(N, V, L, roughness);
+            vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
+        
+            vec3 kS = F;
+            vec3 kD = vec3(1.0) - kS;
+            kD *= 1.0 - metallic;	  
+                
+            vec3 numerator    = NDF * G * F;
+            float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+            vec3 specular     = numerator / max(denominator, 0.001);  
+                    
+            // add to outgoing radiance Lo
+            float NdotL = max(dot(N, L), 0.0);                
+            outColor += (kD * albedo / kPi + specular) * radiance * NdotL; 
         }
-        vec2 screenCoord=(gl_FragCoord.xy/size)*2. -1.;
+        vec2 screenCoord=(gl_FragCoord.xy/size) * 2. - 1.;
         
         float grey=(outColor.r+outColor.g+outColor.b)/3.0;
         float dist = length(screenCoord);
-        float shade = pow(health,2.);
-        float border=0.3*dist*dist*(1.-health); 
-        outColor=mix(vec3(grey),outColor,shade);
-        outColor=mix(outColor,vec3(0.7,0.0,0.0),border);
+        float healthClamp = min(1., health * 2.);
+        outColor=mix(vec3(grey),outColor,healthClamp);
+        
+        outColor=mix(outColor,vec3(0.1,0.0,0.0),smoothstep(0.2, 1.3, dist) * (1. - healthClamp));
         
         float timeSinceDamage = coolTime - damageTime;
         if (timeSinceDamage < 4.)
-            outColor = mix(outColor, vec3(1., 0., 0.), exp(-2.*timeSinceDamage) * 0.9);
+            outColor = mix(outColor, vec3(1., 0., 0.), exp(-3.*timeSinceDamage) * 0.9);
         
+        float timeSinceAttack = coolTime - attackTime;
+        if (timeSinceAttack < 1.) {
+            
+        }
+        outColor = outColor / (outColor + 1.);
         outColor = pow(outColor, vec3(1. / 2.2));
         return outColor;
     }
@@ -253,11 +312,10 @@ function transformShader(gl) {
             "uViewMatrix": gl.getUniformLocation(id, "uViewMatrix"),
             "uModelMatrix": gl.getUniformLocation(id, "uModelMatrix"),
             "uNormalMatrix": gl.getUniformLocation(id, "uNormalMatrix"),
-            "diffuse": gl.getUniformLocation(id, "diffuse"),
+            "albedo": gl.getUniformLocation(id, "albedo"),
             "lightPos": gl.getUniformLocation(id, "lightPos"),
-            "ambient": gl.getUniformLocation(id, "ambient"),
-            "specular": gl.getUniformLocation(id, "specular"),
-            "nCoeff": gl.getUniformLocation(id, "nCoeff"),
+            "metallic": gl.getUniformLocation(id, "metallic"),
+            "roughness": gl.getUniformLocation(id, "roughness"),
             "camPos": gl.getUniformLocation(id, "camPos"),
             "lColor": gl.getUniformLocation(id,"lColor"),
             "nLights": gl.getUniformLocation(id, "nLights"),
@@ -266,6 +324,8 @@ function transformShader(gl) {
             "coolTime": gl.getUniformLocation(id, "coolTime"),
             "damageTime": gl.getUniformLocation(id, "damageTime"),
             "size": gl.getUniformLocation(id, "size"),
+            "attackTime": gl.getUniformLocation(id, "attackTime"),
+            "attackDir": gl.getUniformLocation(id, "attackDir"),
         },
     };
 
