@@ -10,21 +10,21 @@ class Character {
         this.velocity = vec3.create();
 
         let meshMat = mat4.create();
-        mat4.translate(meshMat, meshMat, [0, 0, -1.5]);
-        mat4.rotate(meshMat, meshMat, Math.PI * 0.5, [0, 1, 0]);
-        mat4.rotate(meshMat, meshMat, Math.PI, [0, 0, 1]);
+        //mat4.translate(meshMat, meshMat, [0, 0, 0]);
+        //mat4.rotate(meshMat, meshMat, Math.PI * 0.5, [0, 1, 0]);
+        //mat4.rotate(meshMat, meshMat, Math.PI, [0, 0, 1]);
         mat4.scale(meshMat, meshMat, [0.5, 0.5, 0.5]);
-        let aMesh = new Mesh(gl, "models/Spartan_Sword.obj", meshMat);
+        let aMesh = new Mesh(gl, "models/swordf.obj", meshMat);
         this.model = new GameObject(new Transform(), aMesh, assets.materials.white, shader);
         this.weaponTransform = this.model.transform;
 
         this.swingTransform = new Transform();
         this.swingTransform.setParent(this.transform1);
         this.weaponTransform.setParent(this.swingTransform);
-        this.weaponTransform.rotate([0, 0, 1], Math.PI);
-        //this.weaponTransform.translate([0, 0, -1.5]);
+        this.weaponTransform.rotate([1, 0, 0], Math.PI * 0.5);
+        this.weaponTransform.translate([-2, 0, -1.5]);
 
-        this.swingTransform.rotate([0, 1., 0], -Math.PI * 0.1);
+        //this.swingTransform.rotate([0, 1., 0], -Math.PI * 0.1);
 
         this.onGround = false;
         this.dead = false;

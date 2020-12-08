@@ -24,6 +24,7 @@ function main() {
         ground: g,
         ceiling: 650,
         time: 0.,
+        size: new vec2.fromValues(canvas.width, canvas.height),
     };
 
 
@@ -34,8 +35,8 @@ function main() {
     let cylinderMesh = new Mesh(gl, "models/Cylinder.obj", mat4.fromScaling(mat4.create(),[10.0,600.0,10.0]));
     let outerSphere = new Mesh(gl,"models/sphere6.obj",
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
-    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.beige, shader);
-    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.beige, shader);
+    let ground = new GameObject(new Transform(), sphereMesh, assets.materials.green, shader);
+    let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.purple, shader);
 
     for (i = 0; i < state.noc; i++) {
         let dir = vec3.fromValues(normalRandom(), normalRandom(), normalRandom());
@@ -90,7 +91,7 @@ function drawScene(gl, deltaTime, state) {
         state.lColor[3*i]=1.0//Math.sin(now/10);//red values
         state.lColor[1+3*i]=1.0//Math.cos(now/10);//-i/3;//green values
         state.lColor[2+3*i]=1.0//i/3;//blue values
-        state.lStrength[i]=0.0;//strength values
+        state.lStrength[i]=1.0;//strength values
     }
 
 
@@ -117,7 +118,6 @@ function drawScene(gl, deltaTime, state) {
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
     mat4.perspective(projectionMatrix, 60.0 * Math.PI / 180.0, aspect, 0.1, 10000.);
 
-
     GameObject.All.forEach(object => {
         gl.useProgram(object.shader.id);
 
@@ -140,6 +140,7 @@ function drawScene(gl, deltaTime, state) {
         gl.uniform1f(object.shader.uniformLocations.health, state.character.health);
         gl.uniform1f(object.shader.uniformLocations.damageTime, state.character.damageTime);
         gl.uniform1f(object.shader.uniformLocations.coolTime, state.time);
+        gl.uniform2fv(object.shader.uniformLocations.size, state.size);
 
         gl.bindVertexArray(object.mesh.VAO);
         gl.drawArrays(gl.TRIANGLES, 0, object.mesh.numVertices);
@@ -186,6 +187,7 @@ function transformShader(gl) {
     uniform vec3 specular;
     uniform float nCoeff;
     uniform float health;
+    uniform vec2 size;
     uniform vec3 camPos;
     uniform int nLights;
     uniform vec3[42] lightPos;
@@ -217,8 +219,14 @@ function transformShader(gl) {
             
             outColor += (aTerm + sTerm + dTerm)*attenuation;
         }
+        vec2 screenCoord=(gl_FragCoord.xy/size)*2. -1.;
+        
         float grey=(outColor.r+outColor.g+outColor.b)/3.0;
-        //outColor = mix(vec3(grey), outColor, health);
+        float dist = length(screenCoord);
+        float shade = pow(health,2.);
+        float border=0.3*dist*dist*(1.-health); 
+        outColor=mix(vec3(grey),outColor,shade);
+        outColor=mix(outColor,vec3(0.7,0.0,0.0),border);
         
         float timeSinceDamage = coolTime - damageTime;
         if (timeSinceDamage < 4.)
@@ -256,7 +264,8 @@ function transformShader(gl) {
             "lStrength": gl.getUniformLocation(id, "lStrength"),
             "health": gl.getUniformLocation(id, "health"),
             "coolTime": gl.getUniformLocation(id, "coolTime"),
-            "damageTime": gl.getUniformLocation(id, "damageTime")
+            "damageTime": gl.getUniformLocation(id, "damageTime"),
+            "size": gl.getUniformLocation(id, "size"),
         },
     };
 
