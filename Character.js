@@ -42,44 +42,8 @@ class Character {
         this.damageTime = 0.;
         this.attackTime = 0.;
         this.attackDir = vec2.fromValues(0., 0.);
-        this.sounds = this.makeSounds();
-    }
-    //need to find sounds
-    makeSounds(){
-        let all=[];
-        let strike=[];
-        let damage=[];
-        let success=[];
-        let jump=[];
-        let run=[];
-        jump.push(new Audio("sounds/goodsound.mp3"));
-        run.push(new Audio("sounds/step.mp3"));
-        damage.push(new Audio("sounds/badsound.mp3"));
-        all.push(strike);
-        all.push(damage);
-        all.push(success);
-        all.push(jump);
-        all.push(run);
-        return all;
     }
 
-    playRandom(input){
-        if (input==="strike"){
-            this.sounds[0][Math.floor(Math.random()*this.sounds[0].length)].play();
-        }
-        else if (input==="damage"){
-            this.sounds[1][Math.floor(Math.random()*this.sounds[1].length)].play();
-        }
-        else if (input==="success"){
-            this.sounds[2][Math.floor(Math.random()*this.sounds[2].length)].play();
-        }
-        else if (input==="jump"){
-            this.sounds[3][Math.floor(Math.random()*this.sounds[3].length)].play();
-        }
-        else if (input==="run"){
-            this.sounds[4][0].play();
-        }
-    }
 
     get transform() {
         return this.transform2;
@@ -158,7 +122,7 @@ class Character {
             this.onGround = false;
             localVelocity[1] += jumpPower;
             localVelocity[2] *= jumpBoost;
-            this.playRandom("jump");
+            assets.sounds.jump.play();
         }
         
         if (vec3.length(this.transform1.globalPosition) > state.ceiling-1) {
@@ -225,7 +189,8 @@ class Character {
         let timeSinceDamage = state.time - this.damageTime;
         if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
             this.health -= 0.334;
-            this.playRandom("damage");
+            assets.sounds.damage.play();
+            vec3.scaleAndAdd(this.velocity, this.velocity, snake.velocity, 10.);
             this.damageTime = state.time;
             if (this.health < 0.) {
                 this.health = 0.;

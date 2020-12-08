@@ -24,5 +24,16 @@ const assets = {
         celing: {albedo: [0,0,0], metallic: 0.8, roughness: 0.2},
         chainsawBody:{albedo: [105/255,75/255,0/255], metallic: 0.2, roughness: 0.8},
         chainsawChain:{albedo: [0.1,0.1,0.1], metallic: 1.0, roughness: 0.2},
+    },
+    sounds: {
+        jump: new RandomSound([
+            {name: "sounds/goodsound.mp3", volume:0.5},
+        ]),
+        run: new RandomSound([
+            {name: "sounds/step.mp3", volume:0.5},
+        ]),
+        damage: new RandomSound([
+            {name: "sounds/badsound.mp3", volume:0.5},
+        ]),
     }
 };
