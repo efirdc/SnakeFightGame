@@ -10,19 +10,26 @@ class Character {
         this.velocity = vec3.create();
 
         let meshMat = mat4.create();
-        //mat4.translate(meshMat, meshMat, [0, 0, 0]);
+        mat4.translate(meshMat, meshMat, [0, 0, 0]);
         //mat4.rotate(meshMat, meshMat, Math.PI * 0.5, [0, 1, 0]);
         //mat4.rotate(meshMat, meshMat, Math.PI, [0, 0, 1]);
         mat4.scale(meshMat, meshMat, [0.5, 0.5, 0.5]);
-        let aMesh = new Mesh(gl, "models/swordf.obj", meshMat);
-        this.model = new GameObject(new Transform(), aMesh, assets.materials.white, shader);
-        this.weaponTransform = this.model.transform;
+        let chainSaw = new Mesh(gl, "models/cbody.obj");
+        let t=new Transform();
+        t.setParent(this.transform2);
+        t.translate([0.,-2.,-3.]);
+        this.model = new GameObject(t, chainSaw, assets.materials.white, shader);
+        this.chains = [new Mesh(gl, "models/chain1.obj"), new Mesh(gl, "models/chain2.obj"), new Mesh(gl, "models/chain3.obj"), new Mesh(gl, "models/chain4.obj"), new Mesh(gl, "models/chain5.obj")];
+        this.blade = new GameObject(t, this.chains[0], assets.materials.red, shader);
 
-        this.swingTransform = new Transform();
-        this.swingTransform.setParent(this.transform1);
-        this.weaponTransform.setParent(this.swingTransform);
-        this.weaponTransform.rotate([1, 0, 0], Math.PI * 0.5);
-        this.weaponTransform.translate([-2, 0, -1.5]);
+        
+       // this.weaponTransform = this.model.transform;
+
+        //this.swingTransform = new Transform();
+        //this.swingTransform.setParent(this.transform1);
+        //this.weaponTransform.setParent(this.swingTransform);
+       // this.weaponTransform.rotate([1, 0, 0], Math.PI * 0.5);
+       // this.weaponTransform.translate([-2, 0, -1.5]);
 
         //this.swingTransform.rotate([0, 1., 0], -Math.PI * 0.1);
 
@@ -32,6 +39,43 @@ class Character {
 
         this.health = 1.;
         this.damageTime = 0.;
+        this.sounds = this.makeSounds();
+    }
+    //need to find sounds
+    makeSounds(){
+        let all=[];
+        let strike=[];
+        let damage=[];
+        let success=[];
+        let jump=[];
+        let run=[];
+        jump.push(new Audio("sounds/goodsound.mp3"));
+        run.push(new Audio("sounds/step.mp3"));
+        damage.push(new Audio("sounds/badsound.mp3"));
+        all.push(strike);
+        all.push(damage);
+        all.push(success);
+        all.push(jump);
+        all.push(run);
+        return all;
+    }
+    
+    playRandom(input){
+        if (input==="strike"){
+            this.sounds[0][Math.floor(Math.random()*this.sounds[0].length)].play();
+        }
+        else if (input==="damage"){
+            this.sounds[1][Math.floor(Math.random()*this.sounds[1].length)].play();
+        }
+        else if (input==="success"){
+            this.sounds[2][Math.floor(Math.random()*this.sounds[2].length)].play();
+        }
+        else if (input==="jump"){
+            this.sounds[3][Math.floor(Math.random()*this.sounds[3].length)].play();
+        }
+        else if (input==="run"){
+            this.sounds[4][0].play();
+        }
     }
 
     get transform() {
@@ -47,6 +91,7 @@ class Character {
         const gravity = -0.01;
         const jumpPower = 0.5;
         const jumpBoost = 2.;
+        this.blade.mesh=this.chains[Math.floor(state.time / 0.1) % (this.chains.length-1)]
 
         // Handle inputs
         let inputHandler = state.inputHandler;
@@ -102,6 +147,7 @@ class Character {
             this.onGround = false;
             localVelocity[1] += jumpPower;
             localVelocity[2] *= jumpBoost;
+            this.playRandom("jump");
         }
         
         if (vec3.length(this.transform1.globalPosition) > state.ceiling-1) {
@@ -117,7 +163,10 @@ class Character {
         let frictionCoeff = this.onGround ? groundedFrictionCoeff : aerialFrictionCoeff;
         let frictionVector = vec3.scale(vec3.create(), tangentVelocityNormalized, squareVelocity * frictionCoeff * timeScale);
         vec3.add(localVelocity, localVelocity, frictionVector);
-
+        if (this.onGround && vec2.length(new vec2.fromValues(localVelocity[0],localVelocity[1]))>=0.01){
+            //this.playRandom("run");
+        } 
+ 
         //if (!this.onGround)
         //    moveAxis[0] = 0.;
 
@@ -127,7 +176,7 @@ class Character {
         let scaledVelocity = vec3.scale(vec3.create(), this.velocity, timeScale);
         this.transform1.translate(scaledVelocity);
         this.handleWorldCollision(state);
-    }
+   }
 
     handleWorldCollision(state){
         this.columnCollision(state);
@@ -178,6 +227,8 @@ class Character {
             vec3.add(distance,position, snake.gameObject.transform.globalPosition);
             if (vec3.length(distance)<10){
                 console.log("YOURE TOUCHING THE SNAKES BUTT");
+                this.playRandom("damage");
+
             }
             snake=snake.tail;
         }
