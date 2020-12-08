@@ -226,6 +226,7 @@ class Character {
         if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
             this.health -= 0.334;
             this.playRandom("damage");
+            vec3.scaleAndAdd(this.velocity, this.velocity, snake.velocity, 10.);
             this.damageTime = state.time;
             if (this.health < 0.) {
                 this.health = 0.;

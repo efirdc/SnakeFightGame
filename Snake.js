@@ -67,12 +67,12 @@ class Snake {
             vec3.normalize(deltaTarget, deltaTarget);
             let localDeltaTarget = this.transform.inverseTransformDirection(deltaTarget);
             this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.0125);
-            let finalVelocity = vec3.scale(vec3.create(), this.transform.forward, 2 * timeScale);
-            this.gameObject.transform.translate(finalVelocity);
+            this.velocity = vec3.scale(vec3.create(), this.transform.forward, 2 * timeScale);
+            this.gameObject.transform.translate(this.velocity);
 
 
             this.headDir = this.transform.back;
-            headVelocity = vec3.length(finalVelocity);
+            headVelocity = vec3.length(this.velocity);
         }
         else {
             let coneDir = this.head.headDir;
