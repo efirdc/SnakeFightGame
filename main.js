@@ -36,6 +36,7 @@ function main() {
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.ground, shader);
     let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.celing, shader);
+    state.groundObject = ground;
 
     const gr = (Math.sqrt(5.0) + 1.0) / 2.0;
     const ga = (2.0 - gr) * 2.0 * Math.PI;
@@ -93,6 +94,9 @@ function drawScene(gl, deltaTime, state) {
     gl.clearDepth(1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+     if (state.inputHandler.isKeyPressed("KeyO"))
+         state.groundObject.active = !state.groundObject.active;
+
     state.character.update(state, deltaTime);
     state.snake.update(state, deltaTime);
 
@@ -130,9 +134,12 @@ function drawScene(gl, deltaTime, state) {
 
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
-    mat4.perspective(projectionMatrix, 60.0 * Math.PI / 180.0, aspect, 0.1, 10000.);
+    mat4.perspective(projectionMatrix, 75.0 * Math.PI / 180.0, aspect, 0.1, 10000.);
 
     GameObject.All.forEach(object => {
+        if (!object.active)
+            return;
+
         gl.useProgram(object.shader.id);
 
         let m1 = state.character.transform.worldToLocalMatrix;
