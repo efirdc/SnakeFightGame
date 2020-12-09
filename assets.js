@@ -35,5 +35,14 @@ const assets = {
         damage: new RandomSound([
             {name: "sounds/badsound.mp3", volume:0.5, pool:true, numpool:20},
         ]),
+        attack: new RandomSound([
+            {name: "sounds/genericimpact1.mp3", volume:0.5, pool:true, numpool:20},
+            {name: "sounds/genericimpact2.mp3", volume:0.5, pool:true, numpool:20},
+            {name: "sounds/genericimpact3.mp3", volume:0.5, pool:true, numpool:20},
+            {name: "sounds/genericimpact4.mp3", volume:0.5, pool:true, numpool:20},
+            {name: "sounds/genericimpact5.mp3", volume:0.5, pool:true, numpool:20},
+            {name: "sounds/genericimpact6.mp3", volume:0.5, pool:true, numpool:20},
+            {name: "sounds/genericimpact7.mp3", volume:0.5, pool:true, numpool:20},
+        ]),
     }
 };

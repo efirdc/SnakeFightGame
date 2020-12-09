@@ -50,26 +50,27 @@ class Snake {
             let localUpDirection = this.transform.inverseTransformDirection(upDirection);
             let dist = vec3.length(this.gameObject.transform.globalPosition);
             if (dist < state.ground)
-                this.transform.rotateTowards2([0, 0, 1], localUpDirection, 0.005 * timeScale);
+                this.transform.rotateTowards2([0, 0, 1], localUpDirection, 0.0025 * timeScale);
             else if (dist > state.ceiling)
                 this.transform.rotateTowards2([0, 0, -1], localUpDirection, 0.02 * timeScale);
             else
                 this.transform.rotateTowards2([0, 0, -1], localUpDirection, 0.0025 * timeScale);
 
+            //this.transform.rotateTowards([0, 1, 0], localUpDirection, 1)
+
             let t = Date.now() * 0.25;
             let xAngle = Math.sin(3*t + 8) + Math.sin(2*t - 5);
             let yAngle = Math.sin(3*t - 1) + Math.sin(2*t + 6);
             this.transform.rotate([1, 0, 0], xAngle * 0.1 * timeScale);
-            this.transform.rotate([0, 1, 0], yAngle * 0.1 * timeScale);
+            //this.transform.rotate([0, 1, 0], yAngle * 0.1 * timeScale);
 
             let targetPos = state.character.transform.globalPosition;
             let deltaTarget = vec3.sub(vec3.create(), targetPos, currPos);
             vec3.normalize(deltaTarget, deltaTarget);
             let localDeltaTarget = this.transform.inverseTransformDirection(deltaTarget);
-            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.0125 * timeScale);
+            this.transform.rotateTowards2([0, 0, 1], localDeltaTarget, 0.04 * timeScale);
             this.velocity = vec3.scale(vec3.create(), this.transform.forward, 2 * timeScale);
             this.gameObject.transform.translate(this.velocity);
-
 
             this.headDir = this.transform.back;
             headVelocity = vec3.length(this.velocity);
@@ -78,10 +79,18 @@ class Snake {
             let coneDir = this.head.headDir;
             let headPos = this.head.gameObject.transform.globalPosition;
 
+            let centerDist = vec3.length(this.gameObject.transform.globalPosition);
+            let surfaceDist = centerDist - state.ground;
+            if (Math.abs(surfaceDist) < 10) {
+                let upDirection = vec3.normalize(vec3.create(), this.gameObject.transform.globalPosition);
+                let repulsion = 15 * surfaceDist * Math.exp(-surfaceDist * surfaceDist / 1.5);
+                vec3.scaleAndAdd(currPos, currPos, upDirection, repulsion);
+            }
+
             vec3.sub(this.headDir, currPos, headPos);
             vec3.normalize(this.headDir, this.headDir);
 
-            if (vec3.length(this.gameObject.transform.globalPosition) > (state.ground - 0.5)) {
+            if (centerDist > (state.ground - 0.5)) {
                 let minConeAngle = Math.PI * 45 / 180.;
                 let maxConeAngle = Math.PI * 45 / 180.;
                 let proj = Math.clamp(vec3.dot(coneDir, this.headDir), -1. + 1e-5, 1. - 1e-5);
@@ -108,7 +117,6 @@ class Snake {
         }
         if (!this.isTail) {
             this.tail.update(state, deltaTime, headVelocity);
-
 
             let tangent = vec3.add(vec3.create(), this.headDir, this.tail.headDir);
             let normal = vec3.scaleAndAdd(vec3.create(), this.headDir, this.tail.headDir, -1.);

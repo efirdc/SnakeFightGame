@@ -6,6 +6,7 @@ class GameObject {
         this.mesh = mesh;
         this.material = Object.assign({}, material);
         this.shader = shader;
+        this.active = true;
         GameObject.All.push(this);
     }
 }
