@@ -98,7 +98,11 @@ function drawScene(gl, deltaTime, state) {
          state.groundObject.active = !state.groundObject.active;
 
     state.character.update(state, deltaTime);
-    state.snake.update(state, deltaTime);
+
+    Snake.All.forEach(snake => {
+        if (snake.isHead)
+            snake.update(state, deltaTime);
+    });
 
     for (var i=0;i<state.nol;i++){
         let now = state.time;

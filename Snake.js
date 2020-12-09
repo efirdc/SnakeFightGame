@@ -1,5 +1,7 @@
 class Snake {
+    static All = [];
     constructor(head, numChildren, distance, headMesh, headMaterial, bodyMesh, bodyMaterial, shader) {
+        Snake.All.push(this);
         this.head = head;
         this.distance = distance;
         this.initID = numChildren;
@@ -7,6 +9,9 @@ class Snake {
         this.headDir = vec3.create();
         this.tailDir = vec3.create();
         this.velocity = vec3.create();
+        this.headMesh = headMesh;
+        this.headMaterial = headMaterial;
+        this.shader = shader;
 
         if (this.isHead)
             this.gameObject = new GameObject(new Transform().translate([50, 40, 25]), headMesh, headMaterial, shader);
@@ -31,6 +36,50 @@ class Snake {
                 headMesh, headMaterial, bodyMesh, bodyMaterial, shader);
         this.health = 1.;
         this.damageTime = 0;
+    }
+
+    weAreDead() {
+        this.gameObject.delete();
+        Snake.All = Snake.All.filter(elem => elem !== this);
+        if (this.tail !== undefined)
+            this.tail.weAreDead();
+    }
+
+    areWeDead(count) {
+        if (this.isHead) {
+            if (count < 20)
+                this.weAreDead();
+        }
+        else
+            this.head.areWeDead(count + 1);
+    }
+
+    die() {
+        if (this.tail !== undefined)
+            this.tail.becomeHead();
+        this.head.tail = undefined;
+        this.gameObject.delete();
+        Snake.All = Snake.All.filter(elem => elem !== this);
+        this.areWeDead(0);
+    }
+
+    becomeHead() {
+        this.head = undefined;
+        let oldObject = this.gameObject;
+        this.gameObject = new GameObject(new Transform(),
+            this.headMesh, this.headMaterial, this.shader);
+        this.transform = this.gameObject.transform;
+        this.transform.localPosition = oldObject.transform.globalPosition;
+        oldObject.delete();
+        this.health = 1.;
+        this.areWeDeadFromTail();
+    }
+
+    areWeDeadFromTail() {
+        if (this.isTail)
+            this.areWeDead(0);
+        else
+            this.tail.areWeDeadFromTail();
     }
 
     get isHead() {

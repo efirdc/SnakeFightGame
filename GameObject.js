@@ -9,4 +9,8 @@ class GameObject {
         this.active = true;
         GameObject.All.push(this);
     }
+
+    delete() {
+        GameObject.All = GameObject.All.filter(elem => elem !== this);
+    }
 }

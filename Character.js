@@ -128,7 +128,8 @@ class Character {
         }
         
         if (vec3.length(this.transform1.globalPosition) > state.ceiling-1) {
-            localVelocity[1] = 0.;
+            if (localVelocity[1] > 0.)
+                localVelocity[1] *= -0.1;
             let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
             vec3.scale(newPosition, newPosition, state.ceiling-1);
             this.transform1.localPosition = newPosition;
@@ -181,40 +182,40 @@ class Character {
     }
 
     snakeCollision(state){
-        let snake = state.snake;
         let position = this.transform1.globalPosition;
-        let distance = vec3.create();
-        vec3.negate(position,position);
-        vec3.add(distance, position, snake.gameObject.transform.globalPosition);
-        let timeSinceDamage = state.time - this.damageTime;
-        if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
-            this.health -= 0.334;
-            assets.sounds.damage.play();
-            vec3.scaleAndAdd(this.velocity, this.velocity, snake.velocity, 10.);
-            this.damageTime = state.time;
-            if (this.health < 0.) {
-                this.health = 0.;
-                this.dead = true;
-                this.deadSideDirection = this.transform1.right;
-            }
-        }
-        snake = snake.tail;
-        while (snake){
-            let timeSinceDamage = state.time - snake.damageTime;
-
-            if (timeSinceDamage > 0.1 && state.inputHandler.isKeyHeld("MouseLeft")) {
-                let hitPos = vec3.add(vec3.create(), this.transform.globalPosition, this.transform.forward);
-                let hitDist = vec3.distance(hitPos, snake.transform.globalPosition);
-                if (hitDist < 10) {
-                    state.freezeTime += 0.025;
-                    assets.sounds.attack.play();
-                    snake.gameObject.material.albedo = vec3.fromValues(3.,3.,3.);
-                    snake.damageTime = state.time;
-                    snake.health -= 0.5;
+        Snake.All.forEach(snake => {
+            if (snake.isHead) {
+                let distance = vec3.create();
+                vec3.negate(position,position);
+                vec3.add(distance, position, snake.gameObject.transform.globalPosition);
+                let timeSinceDamage = state.time - this.damageTime;
+                if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
+                    this.health -= 0.334;
+                    assets.sounds.damage.play();
+                    vec3.scaleAndAdd(this.velocity, this.velocity, snake.velocity, 10.);
+                    this.damageTime = state.time;
+                    if (this.health < 0.) {
+                        this.health = 0.;
+                        this.dead = true;
+                        this.deadSideDirection = this.transform1.right;
+                    }
                 }
-
+            } else {
+                let timeSinceDamage = state.time - snake.damageTime;
+                if (timeSinceDamage > 0.1 && state.inputHandler.isKeyHeld("MouseLeft")) {
+                    let hitPos = vec3.add(vec3.create(), this.transform.globalPosition, this.transform.forward);
+                    let hitDist = vec3.distance(hitPos, snake.transform.globalPosition);
+                    if (hitDist < 10) {
+                        state.freezeTime += 0.025;
+                        assets.sounds.attack.play();
+                        snake.gameObject.material.albedo = vec3.fromValues(3.,3.,3.);
+                        snake.damageTime = state.time;
+                        snake.health -= 0.334;
+                        if (snake.health < 0.)
+                            snake.die();
+                    }
+                }
             }
-            snake=snake.tail;
-        }
+        });
     }
 }
