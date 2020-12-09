@@ -207,7 +207,7 @@ class Character {
                 let hitDist = vec3.distance(hitPos, snake.transform.globalPosition);
                 if (hitDist < 10) {
                     state.freezeTime += 0.025;
-                    assets.sounds.damage.play();
+                    assets.sounds.attack.play();
                     snake.gameObject.material.albedo = vec3.fromValues(3.,3.,3.);
                     snake.damageTime = state.time;
                     snake.health -= 0.5;
