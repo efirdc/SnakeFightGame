@@ -24,11 +24,10 @@ function main() {
         ground: g,
         ceiling: 650,
         time: 0.,
+        unscaledTime: 0.,
+        freezeTime: 0.,
         size: new vec2.fromValues(canvas.width, canvas.height),
     };
-
-
-//    let shader = transformShader(gl);
 
     let cubeMesh = new Mesh(gl, "models/cube.obj");
     let sphereMesh = new Mesh(gl,"models/sphere6S.obj", mat4.fromScaling(mat4.create(),[state.ground,state.ground,state.ground]));
@@ -37,6 +36,7 @@ function main() {
         mat4.fromScaling(mat4.create(),[state.ceiling,state.ceiling,state.ceiling]), true);
     let ground = new GameObject(new Transform(), sphereMesh, assets.materials.ground, shader);
     let ceiling = new GameObject(new Transform(), outerSphere, assets.materials.celing, shader);
+    state.groundObject = ground;
 
     const gr = (Math.sqrt(5.0) + 1.0) / 2.0;
     const ga = (2.0 - gr) * 2.0 * Math.PI;
@@ -53,7 +53,7 @@ function main() {
         let material = {
             albedo:hsv2rgb(randRange(0, 260), randRange(0.8, 1.0), randRange(0.8, 1.0)),
             metallic: randRange(0.2, 0.6), roughness: randRange(0.2, 0.6),
-        }
+        };
         let cylinder = new GameObject(t1, cylinderMesh, material, shader);
     }
 
@@ -77,6 +77,13 @@ function main() {
 }
 
 function drawScene(gl, deltaTime, state) {
+    state.unscaledTime += deltaTime;
+    if (state.freezeTime > 0.) {
+        state.freezeTime -= deltaTime;
+        deltaTime = 0.;
+    } else {
+        state.freezeTime = 0.;
+    }
     state.time += deltaTime;
     gl.clearColor(0.2, 0.2, 0.2, 1.0);
     gl.enable(gl.DEPTH_TEST);
@@ -87,8 +94,15 @@ function drawScene(gl, deltaTime, state) {
     gl.clearDepth(1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+     if (state.inputHandler.isKeyPressed("KeyO"))
+         state.groundObject.active = !state.groundObject.active;
+
     state.character.update(state, deltaTime);
-    state.snake.update(state, deltaTime);
+
+    Snake.All.forEach(snake => {
+        if (snake.isHead)
+            snake.update(state, deltaTime);
+    });
 
     for (var i=0;i<state.nol;i++){
         let now = state.time;
@@ -124,9 +138,12 @@ function drawScene(gl, deltaTime, state) {
 
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
-    mat4.perspective(projectionMatrix, 60.0 * Math.PI / 180.0, aspect, 0.1, 10000.);
+    mat4.perspective(projectionMatrix, 75.0 * Math.PI / 180.0, aspect, 0.1, 10000.);
 
     GameObject.All.forEach(object => {
+        if (!object.active)
+            return;
+
         gl.useProgram(object.shader.id);
 
         let m1 = state.character.transform.worldToLocalMatrix;

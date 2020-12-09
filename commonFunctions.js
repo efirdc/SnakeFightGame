@@ -154,3 +154,11 @@ function hsv2rgb(h,s,v)
 function randRange(min, max) {
     return Math.random() * (max - min) + min;
 }
+
+function lerp(a, b, t) {
+    return (1 - t) * a + t * b;
+}
+
+function inverseLerp(a, b, q) {
+    return (q - a) / (b - a);
+}

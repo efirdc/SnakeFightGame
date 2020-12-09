@@ -53,12 +53,13 @@ class Character {
         let timeScale = Math.min(deltaTime, 1 / 20) * 60;
         const height = 3;
         const acceleration = 0.1;
-        const groundedFrictionCoeff = -0.5;
-        const aerialFrictionCoeff = -0.075;
-        const gravity = -0.01;
-        const jumpPower = 0.5;
-        const jumpBoost = 2.;
-        this.blade.mesh=this.chains[Math.floor(state.time / 0.05) % (this.chains.length-1)]
+        const groundedFrictionCoeff = -0.06;
+        const aerialFrictionCoeff = -0.03;
+        const minGravity = -0.04;
+        const maxGravity = -0.1;
+        const jumpPower = 1.;
+        const jumpBoost = 1.5;
+        this.blade.mesh=this.chains[Math.floor(state.time / 0.05) % (this.chains.length-1)];
 
         // Handle inputs
         let inputHandler = state.inputHandler;
@@ -77,14 +78,15 @@ class Character {
             console.log(this.attackTime, this.attackDir);
         }
 
-
         if (this.dead) {
             moveAxis[0] = moveAxis[1] = moveAxis[2] = 0.;
             deltaMouse[0] = deltaMouse[1] = 0.;
         }
 
         let upDirection = vec3.normalize(vec3.create(), this.transform1.globalPosition);
-
+        let centerDistance = vec3.length(this.transform1.globalPosition);
+        let t = inverseLerp(state.ground, state.ceiling, centerDistance);
+        let gravity = lerp(minGravity, maxGravity, t);
         vec3.scaleAndAdd(this.velocity, this.velocity, upDirection, gravity * timeScale);
 
         if (!this.dead)
@@ -126,24 +128,23 @@ class Character {
         }
         
         if (vec3.length(this.transform1.globalPosition) > state.ceiling-1) {
-            localVelocity[1] = 0.;
+            if (localVelocity[1] > 0.)
+                localVelocity[1] *= -0.1;
             let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
             vec3.scale(newPosition, newPosition, state.ceiling-1);
             this.transform1.localPosition = newPosition;
         }
  
         let tangentVelocity = vec3.fromValues(localVelocity[0], 0., localVelocity[2]);
-        let squareVelocity = vec3.dot(tangentVelocity, tangentVelocity);
+        let velocityMagnitude = vec3.length(tangentVelocity);
         let tangentVelocityNormalized = vec3.normalize(tangentVelocity, tangentVelocity);
         let frictionCoeff = this.onGround ? groundedFrictionCoeff : aerialFrictionCoeff;
-        let frictionVector = vec3.scale(vec3.create(), tangentVelocityNormalized, squareVelocity * frictionCoeff * timeScale);
+        let frictionVector = vec3.scale(vec3.create(), tangentVelocityNormalized, velocityMagnitude * frictionCoeff * timeScale);
         vec3.add(localVelocity, localVelocity, frictionVector);
+
         if (this.onGround && vec2.length(new vec2.fromValues(localVelocity[0],localVelocity[1]))>=0.01){
             //this.playRandom("run");
         }
-
-        //if (!this.onGround)
-        //    moveAxis[0] = 0.;
 
         vec3.scaleAndAdd(localVelocity, localVelocity, moveAxis, acceleration * timeScale);
         this.velocity = this.transform1.transformVector(localVelocity);
@@ -181,37 +182,40 @@ class Character {
     }
 
     snakeCollision(state){
-        let snake = state.snake;
         let position = this.transform1.globalPosition;
-        let distance = vec3.create();
-        vec3.negate(position,position);
-        vec3.add(distance, position, snake.gameObject.transform.globalPosition);
-        let timeSinceDamage = state.time - this.damageTime;
-        if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
-            this.health -= 0.334;
-            assets.sounds.damage.play();
-            vec3.scaleAndAdd(this.velocity, this.velocity, snake.velocity, 10.);
-            this.damageTime = state.time;
-            if (this.health < 0.) {
-                this.health = 0.;
-                this.dead = true;
-                this.deadSideDirection = this.transform1.right;
-            }
-        }
-        snake = snake.tail;
-        while (snake){
-            let timeSinceDamage = state.time - snake.damageTime;
-
-            if (timeSinceDamage > 0.1 && state.inputHandler.isKeyHeld("MouseLeft")) {
-                let hitPos = vec3.add(vec3.create(), this.transform.globalPosition, this.transform.forward);
-                let hitDist = vec3.distance(hitPos, snake.transform.globalPosition);
-                if (hitDist < 10) {
-                    snake.damageTime = state.time;
-                    snake.health -= 0.5;
+        Snake.All.forEach(snake => {
+            if (snake.isHead) {
+                let distance = vec3.create();
+                vec3.negate(position,position);
+                vec3.add(distance, position, snake.gameObject.transform.globalPosition);
+                let timeSinceDamage = state.time - this.damageTime;
+                if (!this.dead && timeSinceDamage > 2. && vec3.length(distance)<10){
+                    this.health -= 0.334;
+                    assets.sounds.damage.play();
+                    vec3.scaleAndAdd(this.velocity, this.velocity, snake.velocity, 10.);
+                    this.damageTime = state.time;
+                    if (this.health < 0.) {
+                        this.health = 0.;
+                        this.dead = true;
+                        this.deadSideDirection = this.transform1.right;
+                    }
                 }
-
+            } else {
+                let timeSinceDamage = state.time - snake.damageTime;
+                if (timeSinceDamage > 0.1 && state.inputHandler.isKeyHeld("MouseLeft")) {
+                    let hitPos = vec3.add(vec3.create(), this.transform.globalPosition, this.transform.forward);
+                    let hitDist = vec3.distance(hitPos, snake.transform.globalPosition);
+                    if (hitDist < 10) {
+                        state.freezeTime += 0.025;
+                        assets.sounds.attack.play();
+                        snake.gameObject.material.albedo = vec3.fromValues(3.,3.,3.);
+                        snake.damageTime = state.time;
+                        snake.health -= 0.334;
+                        if (snake.health < 0.)
+                            snake.die();
+                    }
+                }
             }
-            snake=snake.tail;
-        }
+        });
     }
 }
