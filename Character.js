@@ -21,7 +21,11 @@ class Character {
         let t1=new Transform();
         t1.setParent(this.transform2);
         t1.rotate([0.,0.,1],Math.PI/8).rotate([1.,0.,0.],Math.PI/6).translate([-1.,-2.,-3.]);
-        this.cPos=[t,t1]
+        let t2=new Transform();
+        t2.setParent(this.transform2);
+        t2.rotate([0.,0.,1.],Math.PI/8).rotate([1.,0.,0.],-Math.PI/6).translate([0.,-1.,-3.]);
+ 
+        this.cPos=[t,t1,t2]
         this.model = new GameObject(t, chainSaw, assets.materials.chainsawBody, shader);
         this.chains = [new Mesh(gl, "models/c1.obj"), new Mesh(gl, "models/c2.obj"),
             new Mesh(gl, "models/c3.obj"), new Mesh(gl, "models/c4.obj"), new Mesh(gl, "models/c5.obj"), new Mesh(gl, "models/c6.obj"), new Mesh(gl, "models/c7.obj"), new Mesh(gl, "models/c8.obj")];
@@ -77,25 +81,7 @@ class Character {
 
         let timeSinceAttack = state.time - this.attackTime;
 
-        let walk=1.;
-        if (inputHandler.isKeyHeld("MouseLeft")) {
-            this.blade.mesh=this.chains[Math.floor(state.time / 0.005) % (this.chains.length-1)];
-            this.blade.transform=this.cPos[1];
-            this.model.transform=this.cPos[1];
-            if (this.onGround)
-                walk=1.5;
-            else
-                walk=0.5;
-            if (timeSinceAttack > 1. && !this.dead) {
-                this.attackDir = vec2.fromValues(normalRandom(), normalRandom());
-                this.attackTime = state.time;
-                //console.log(this.attackTime, this.attackDir);
-            }
-        }
-        else{
-            this.blade.transform=this.cPos[0];
-            this.model.transform=this.cPos[0];
-        }
+
 
         if (this.dead) {
             moveAxis[0] = moveAxis[1] = moveAxis[2] = 0.;
@@ -129,7 +115,7 @@ class Character {
         if (Math.abs(rotationAmount) > 1e-5){
             this.transform2.rotate([1, 0, 0], rotationAmount);
         }
-        let localVelocity = this.transform1.inverseTransformVector(this.velocity);
+        let localVelocity = this.transform1.inverseTransformVector(this.velocity);      
 
         if (vec3.length(this.transform1.globalPosition) < state.ground+height) {
             this.onGround = true;
@@ -138,6 +124,39 @@ class Character {
             vec3.scale(newPosition, newPosition, state.ground+height);
             this.transform1.localPosition = newPosition;
         }
+
+        let walk=1.;
+        if (inputHandler.isKeyHeld("MouseLeft")) {
+            this.blade.mesh=this.chains[Math.floor(state.time / 0.005) % (this.chains.length-1)];
+            this.blade.transform=this.cPos[1];
+            this.model.transform=this.cPos[1];
+            if (this.onGround)
+                walk=1.5;
+            else
+                walk=0.5;
+            if (timeSinceAttack > 1. && !this.dead) {
+                this.attackDir = vec2.fromValues(normalRandom(), normalRandom());
+                this.attackTime = state.time;
+                //console.log(this.attackTime, this.attackDir);
+            }
+        }
+        else if (inputHandler.isKeyHeld("MouseRight") && this.onGround) {
+            this.blade.mesh=this.chains[Math.floor(state.time / 0.005) % (this.chains.length-1)];
+            this.blade.transform=this.cPos[2];
+            this.model.transform=this.cPos[2];
+            walk=0.05;
+            localVelocity[1] = 0.;
+            let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
+            vec3.scale(newPosition, newPosition, state.ground+height);
+            this.transform1.localPosition = newPosition;
+ 
+        }
+        else{
+            this.blade.transform=this.cPos[0];
+            this.model.transform=this.cPos[0];
+        }
+
+
 
         if (inputHandler.isKeyHeld("Space") && this.onGround && !this.dead) {
             this.onGround = false;
