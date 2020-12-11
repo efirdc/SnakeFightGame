@@ -27,6 +27,7 @@ function main() {
         unscaledTime: 0.,
         freezeTime: 0.,
         size: new vec2.fromValues(canvas.width, canvas.height),
+        nos: 0,
     };
 
     let cubeMesh = new Mesh(gl, "models/cube.obj");
@@ -125,17 +126,20 @@ function drawScene(gl, deltaTime, state) {
     state.lColor[1+3*state.nol]=1.0;
     state.lColor[2+3*state.nol]=1.0;
     state.lStrength[state.nol]=1.0;
-
-
+    
+    state.nos=0;
+    Snake.All.forEach(snake => {
     //we can have a light on the snakes head! :D
-    state.lights[3*state.nol+3] = state.snake.gameObject.transform.globalPosition[0];
-    state.lights[4+3*state.nol] = state.snake.gameObject.transform.globalPosition[1];
-    state.lights[5+3*state.nol] = state.snake.gameObject.transform.globalPosition[2];
-    state.lColor[3*state.nol+3]=1.0;
-    state.lColor[4+3*state.nol]=0.0;
-    state.lColor[5+3*state.nol]=0.0;
-    state.lStrength[state.nol+1]=10.0;
-
+    if (snake.isHead){
+        state.nos++;
+        state.lights[3*state.nol+3] = snake.gameObject.transform.globalPosition[0];
+        state.lights[4+3*state.nol] = snake.gameObject.transform.globalPosition[1];
+        state.lights[5+3*state.nol] = snake.gameObject.transform.globalPosition[2];
+        state.lColor[3*state.nol+3]=1.0;
+        state.lColor[4+3*state.nol]=0.0;
+        state.lColor[5+3*state.nol]=0.;
+        state.lStrength[state.nol+1]=10.0;
+    }});
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
     mat4.perspective(projectionMatrix, 75.0 * Math.PI / 180.0, aspect, 0.1, 10000.);
@@ -160,7 +164,7 @@ function drawScene(gl, deltaTime, state) {
         gl.uniform3fv(object.shader.uniformLocations.lightPos, state.lights);
         gl.uniform3fv(object.shader.uniformLocations.lColor, state.lColor);
         gl.uniform1fv(object.shader.uniformLocations.lStrength, state.lStrength);
-        gl.uniform1i(object.shader.uniformLocations.nLights, state.nol+2);//+1 for the character light
+        gl.uniform1i(object.shader.uniformLocations.nLights, state.nol+1+state.nos);//+1 for the character light
         gl.uniform1f(object.shader.uniformLocations.health, state.character.health);
         gl.uniform1f(object.shader.uniformLocations.damageTime, state.character.damageTime);
         gl.uniform1f(object.shader.uniformLocations.coolTime, state.time);
