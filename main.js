@@ -98,12 +98,15 @@ function drawScene(gl, deltaTime, state) {
      if (state.inputHandler.isKeyPressed("KeyO"))
          state.groundObject.active = !state.groundObject.active;
 
+
+
     state.character.update(state, deltaTime);
 
+    if(state.groundObject.active){
     Snake.All.forEach(snake => {
         if (snake.isHead)
             snake.update(state, deltaTime);
-    });
+    });}
 
     for (var i=0;i<state.nol;i++){
         let now = state.time;
@@ -134,8 +137,8 @@ function drawScene(gl, deltaTime, state) {
         state.lights[3*(state.nol+state.nos)+3] = snake.gameObject.transform.globalPosition[0];
         state.lights[4+3*(state.nol+state.nos)] = snake.gameObject.transform.globalPosition[1];
         state.lights[5+3*(state.nol+state.nos)] = snake.gameObject.transform.globalPosition[2];
-        state.lColor[3*(state.nol+state.nos)+3]=1.0;
-        state.lColor[4+3*(state.nol+state.nos)]=0.0;
+        state.lColor[3*(state.nol+state.nos)+3]=(Snake.All.length/200.);//1.
+        state.lColor[4+3*(state.nol+state.nos)]=1-(Snake.All.length/200.);
         state.lColor[5+3*(state.nol+state.nos)]=0.0;
         state.lStrength[state.nol+state.nos+1]=10.0;
         state.nos++; 

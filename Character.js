@@ -249,18 +249,22 @@ class Character {
                         snake.gameObject.material.albedo = vec3.fromValues(3.,3.,3.);
                         snake.damageTime = state.time;
                         snake.health -= 0.334;
-                        if (snake.health < 0.)
-                            snake.die();
+                       
                         if (state.inputHandler.isKeyHeld("MouseRight")){
+                            snake.health += 0.167;
+                            if (this.health<1.)
+                                this.health+=0.167;
                             if (snake.tail !== undefined){
                                 //let localVelocity = this.transform1.inverseTransformVector(this.velocity); 
                                 let tmp1 = snake.gameObject.transform.globalPosition;
                                 let tmp2 = snake.tail.gameObject.transform.globalPosition;
+                                let rot = vec3.dot(tmp1, tmp2);
                                // tmp2=lerp(tmp1,tmp2,???);
                                 //vec2.scale(tmp2,tmp2,.2);
                                 vec3.sub(tmp1,tmp2,tmp1);
+
                                 //this.transform2.localPosition(tmp1);
-                                vec3.scale(tmp1,tmp1,0.5);
+                                vec3.scale(tmp1,tmp1,0.85);
                                 this.velocity=tmp1;
                                 //vec3.add(this.velocity,this.velocity, tmp1);
                                 //this.transform1.translate(tmp1);
@@ -269,6 +273,9 @@ class Character {
                             else
                                 state.freezeTime = 0.;
                         }
+                        if (snake.health < 0.)
+                            snake.die();
+ 
                     }
                 }
             }
