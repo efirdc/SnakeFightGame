@@ -131,14 +131,14 @@ function drawScene(gl, deltaTime, state) {
     Snake.All.forEach(snake => {
     //we can have a light on the snakes head! :D
     if (snake.isHead){
-        state.nos++;
-        state.lights[3*state.nol+3] = snake.gameObject.transform.globalPosition[0];
-        state.lights[4+3*state.nol] = snake.gameObject.transform.globalPosition[1];
-        state.lights[5+3*state.nol] = snake.gameObject.transform.globalPosition[2];
-        state.lColor[3*state.nol+3]=1.0;
-        state.lColor[4+3*state.nol]=0.0;
-        state.lColor[5+3*state.nol]=1.0;
-        state.lStrength[state.nol+1]=10.0;
+        state.lights[3*(state.nol+state.nos)+3] = snake.gameObject.transform.globalPosition[0];
+        state.lights[4+3*(state.nol+state.nos)] = snake.gameObject.transform.globalPosition[1];
+        state.lights[5+3*(state.nol+state.nos)] = snake.gameObject.transform.globalPosition[2];
+        state.lColor[3*(state.nol+state.nos)+3]=1.0;
+        state.lColor[4+3*(state.nol+state.nos)]=0.0;
+        state.lColor[5+3*(state.nol+state.nos)]=0.0;
+        state.lStrength[state.nol+state.nos+1]=10.0;
+        state.nos++; 
     }});
     let projectionMatrix = mat4.create();
     let aspect = state.canvas.clientWidth / state.canvas.clientHeight;
@@ -275,11 +275,11 @@ function transformShader(gl) {
             
             vec3 L = lightPos[i] - fragPos.xyz;
             vec3 V = camPos-fragPos.xyz;
-            float d = length(L)+0.2*length(V);
+            float d = length(L)+0.01*length(V);
             L = normalize(L);
             V = normalize(V);
             vec3 H = normalize(L + V);
-            d=d/5.;
+            d=d/2.;
             float attenuation = 1./exp(0.005 * d);
             vec3 radiance = lColor[i] * lStrength[i] * attenuation;
 
