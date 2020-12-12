@@ -26,6 +26,9 @@ const assets = {
         chainsawChain:{albedo: [0.1,0.1,0.1], metallic: 1.0, roughness: 0.2},
     },
     sounds: {
+        revChainsaw: new RandomSound([
+            {name: "sounds/chainsaw2.mp3", volume:0.5},
+        ]),
         jump: new RandomSound([
             {name: "sounds/goodsound.mp3", volume:0.5},
         ]),
