@@ -87,6 +87,9 @@ class Character {
             moveAxis[0] = moveAxis[1] = moveAxis[2] = 0.;
             deltaMouse[0] = deltaMouse[1] = 0.;
         }
+        if (inputHandler.isKeyHeld("MouseRight")) {
+            deltaMouse[1]=0.;
+        }
 
         let upDirection = vec3.normalize(vec3.create(), this.transform1.globalPosition);
         let centerDistance = vec3.length(this.transform1.globalPosition);
@@ -116,7 +119,8 @@ class Character {
             this.transform2.rotate([1, 0, 0], rotationAmount);
         }
         let localVelocity = this.transform1.inverseTransformVector(this.velocity);      
-
+        
+        this.onGround = false;
         if (vec3.length(this.transform1.globalPosition) < state.ground+height) {
             this.onGround = true;
             localVelocity[1] = 0.;
@@ -130,25 +134,21 @@ class Character {
             this.blade.mesh=this.chains[Math.floor(state.time / 0.005) % (this.chains.length-1)];
             this.blade.transform=this.cPos[1];
             this.model.transform=this.cPos[1];
+            //assets.sounds.revChainsaw.play();
             if (this.onGround)
                 walk=1.5;
-            else
-                walk=0.5;
-            if (timeSinceAttack > 1. && !this.dead) {
-                this.attackDir = vec2.fromValues(normalRandom(), normalRandom());
-                this.attackTime = state.time;
-                //console.log(this.attackTime, this.attackDir);
-            }
         }
-        else if (inputHandler.isKeyHeld("MouseRight") && this.onGround) {
+        else if (inputHandler.isKeyHeld("MouseRight")) {
             this.blade.mesh=this.chains[Math.floor(state.time / 0.005) % (this.chains.length-1)];
             this.blade.transform=this.cPos[2];
             this.model.transform=this.cPos[2];
-            walk=0.05;
-            localVelocity[1] = 0.;
-            let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
-            vec3.scale(newPosition, newPosition, state.ground+height);
-            this.transform1.localPosition = newPosition;
+            if (this.onGround){
+                walk=0.05;
+                localVelocity[1] = 0.;
+                let newPosition = vec3.normalize(vec3.create(), this.transform1.globalPosition);
+                vec3.scale(newPosition, newPosition, state.ground+height);
+                this.transform1.localPosition = newPosition;
+            }
  
         }
         else{
@@ -159,7 +159,7 @@ class Character {
 
 
         if (inputHandler.isKeyHeld("Space") && this.onGround && !this.dead) {
-            this.onGround = false;
+          //  this.onGround = false;
             localVelocity[1] += jumpPower;
             localVelocity[2] *= jumpBoost;
             assets.sounds.jump.play();
@@ -240,7 +240,7 @@ class Character {
                 }
             } else {
                 let timeSinceDamage = state.time - snake.damageTime;
-                if (timeSinceDamage > 0.1 && state.inputHandler.isKeyHeld("MouseLeft")) {
+                if (timeSinceDamage > 0.1 && (state.inputHandler.isKeyHeld("MouseLeft") || state.inputHandler.isKeyHeld("MouseRight")) ) {
                     let hitPos = vec3.add(vec3.create(), this.transform.globalPosition, this.transform.forward);
                     let hitDist = vec3.distance(hitPos, snake.transform.globalPosition);
                     if (hitDist < 10) {
@@ -251,6 +251,24 @@ class Character {
                         snake.health -= 0.334;
                         if (snake.health < 0.)
                             snake.die();
+                        if (state.inputHandler.isKeyHeld("MouseRight")){
+                            if (snake.tail !== undefined){
+                                //let localVelocity = this.transform1.inverseTransformVector(this.velocity); 
+                                let tmp1 = snake.gameObject.transform.globalPosition;
+                                let tmp2 = snake.tail.gameObject.transform.globalPosition;
+                               // tmp2=lerp(tmp1,tmp2,???);
+                                //vec2.scale(tmp2,tmp2,.2);
+                                vec3.sub(tmp1,tmp2,tmp1);
+                                //this.transform2.localPosition(tmp1);
+                                vec3.scale(tmp1,tmp1,0.5);
+                                this.velocity=tmp1;
+                                //vec3.add(this.velocity,this.velocity, tmp1);
+                                //this.transform1.translate(tmp1);
+                            //console.log(tmp1, tmp2); 
+                            }
+                            else
+                                state.freezeTime = 0.;
+                        }
                     }
                 }
             }
