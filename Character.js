@@ -172,7 +172,7 @@ class Character {
             vec3.scale(newPosition, newPosition, state.ceiling-1);
             this.transform1.localPosition = newPosition;
         }
- 
+
         let tangentVelocity = vec3.fromValues(localVelocity[0]*walk, 0., localVelocity[2]*walk);
         let velocityMagnitude = vec3.length(tangentVelocity);
         let tangentVelocityNormalized = vec3.normalize(tangentVelocity, tangentVelocity);

@@ -137,7 +137,7 @@ function drawScene(gl, deltaTime, state) {
         state.lights[5+3*state.nol] = snake.gameObject.transform.globalPosition[2];
         state.lColor[3*state.nol+3]=1.0;
         state.lColor[4+3*state.nol]=0.0;
-        state.lColor[5+3*state.nol]=1.0;
+        state.lColor[5+3*state.nol]=0.0;
         state.lStrength[state.nol+1]=10.0;
     }});
     let projectionMatrix = mat4.create();
@@ -275,12 +275,11 @@ function transformShader(gl) {
             
             vec3 L = lightPos[i] - fragPos.xyz;
             vec3 V = camPos-fragPos.xyz;
-            float d = length(L)+0.2*length(V);
+            float d = length(L)+length(V);
             L = normalize(L);
             V = normalize(V);
             vec3 H = normalize(L + V);
-            d=d/5.;
-            float attenuation = 1./exp(0.005 * d);
+            float attenuation = 1.;//exp(0.005 * d);
             vec3 radiance = lColor[i] * lStrength[i] * attenuation;
 
         
