@@ -78,7 +78,7 @@ class Transform {
 
     // Lazy assumption: Parent is only set once when this transform is in world space and unscaled
     // A better implementation would allow for re-parenting that maintains world transform
-    setParent(parent, preserveSpace=Space.WORLD) {
+    setParent(parent, preserveSpace=Space.LOCAL) {
         if (preserveSpace === Space.WORLD) {
             vec3.transformMat4(this._position, this._position, parent.worldToLocalMatrix);
             mat4.mul(this._rotation, parent.localToWorldRotation, this._rotation);
@@ -143,6 +143,15 @@ class Transform {
         this._scale = vec3.fromValues(newValue[0], newValue[1], newValue[2]);
     }
 
+    setEuler(xDegrees, yDegrees, zDegrees) {
+        this._hasChanged = true;
+        mat4.identity(this._rotation);
+        mat4.rotateX(this._rotation, this._rotation, xDegrees / 180. * Math.PI);
+        mat4.rotateY(this._rotation, this._rotation, yDegrees / 180. * Math.PI);
+        mat4.rotateZ(this._rotation, this._rotation, zDegrees / 180. * Math.PI);
+        return this;
+    }
+
     translate(x) {
         this._hasChanged = true;
         vec3.add(this._position, this._position, x);
@@ -156,16 +165,29 @@ class Transform {
         return this;
     }
 
-    rotateTowards(fromAxis, toAxis, percent=1., space=Space.LOCAL) {
+    rotateTowards(fromAxis, toAxis, percent=1., fromAxisSpace=Space.LOCAL, toAxisSpace=Space.LOCAL) {
         this._hasChanged = true;
-        if (space === Space.WORLD) {
+        if (fromAxisSpace === Space.WORLD)
             fromAxis = this.inverseTransformDirection(fromAxis);
+        if (toAxisSpace === Space.WORLD)
             toAxis = this.inverseTransformDirection(toAxis);
-        }
         let cosineAngle = Math.clamp(vec3.dot(toAxis, fromAxis), -1., 1.);
         let angleDifference = Math.acos(cosineAngle);
         let rotAxis = vec3.cross(vec3.create(), toAxis, fromAxis);
-        this.rotate(rotAxis, -angleDifference * percent, space);
+        this.rotate(rotAxis, -angleDifference * percent);
+    }
+
+    rotateTowards2(fromAxis, toAxis, rad, fromAxisSpace=Space.LOCAL, toAxisSpace=Space.LOCAL) {
+        this._hasChanged = true;
+        if (fromAxisSpace === Space.WORLD)
+            fromAxis = this.inverseTransformDirection(fromAxis);
+        if (toAxisSpace === Space.WORLD)
+            toAxis = this.inverseTransformDirection(toAxis);
+        let cosineAngle = Math.clamp(vec3.dot(toAxis, fromAxis), -1., 1.);
+        let angleDifference = Math.acos(cosineAngle);
+        let rotAxis = vec3.cross(vec3.create(), toAxis, fromAxis);
+        let amount = Math.min(rad, angleDifference);
+        this.rotate(rotAxis, -amount);
     }
     scaleBy(scaleVec) {
         this._hasChanged = true;
